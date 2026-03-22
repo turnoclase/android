@@ -1,0 +1,87 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+// REF: Firmado automáticamente: https://stackoverflow.com/a/43230396/5136913
+def keystorePropertiesFile = rootProject.file("../../private/android/keystore.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
+android {
+    compileSdk rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.jaureguialzo.turnoclase"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 65
+        versionName "3.0.30"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        multiDexEnabled true
+    }
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of("17"))
+        }
+    }
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+    namespace 'com.jaureguialzo.turnoclase'
+}
+
+// REF: Generar árbol de dependencias: https://stackoverflow.com/a/42374426/5136913
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:1.7.1"
+    implementation "androidx.media:media:1.7.1"
+    implementation "androidx.legacy:legacy-support-v4:1.0.0"
+    implementation "androidx.multidex:multidex:2.0.1"
+
+    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-appcheck")
+    implementation("com.google.firebase:firebase-appcheck-debug")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+
+    implementation 'com.jakewharton.threetenabp:threetenabp:1.4.9'
+
+    // REF: Dependencias para tests: https://stackoverflow.com/a/56624085
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:core:1.7.0'
+    androidTestImplementation 'androidx.test:runner:1.7.0'
+    androidTestImplementation 'androidx.test:rules:1.7.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
+    androidTestImplementation "tools.fastlane:screengrab:2.1.1"
+}
+
+apply plugin: 'com.google.gms.google-services'

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_acerca_de">...buruz</string>
+    <string name="etiqueta_titulo_licencia">Lizentzia</string>
+    <string name="etiqueta_titulo_reconocimientos">Aitorpenak</string>
+    <string name="dialogo_conectar_codigo">Gela zenbakia</string>
+    <string name="dialogo_conectar_pin">PIN</string>
+    <string name="menu_etiqueta_pin">Gela partekatzeko PIN kodea: %1$s</string>
+    <string name="menu_etiqueta_invitado">Gonbidatu moduan konektatua</string>
+    <string name="menu_accion_generar">Gela berria sortu</string>
+    <string name="menu_accion_conectar">Beste gela batera konektatu</string>
+    <string name="menu_accion_desconectar">Gela honetatik deskonektatu</string>
+    <string name="dialogo_conexion_mensaje">Idatzi konektatu nahi duzun gelaren datuak.</string>
+    <string name="dialogo_conexion_conectar">Konektatu</string>
+    <string name="dialogo_error_titulo">Konexio arazoa</string>
+    <string name="dialogo_error_mensaje">Idatzitako datuekin ezin izan da gela horretara konektatu.</string>
+    <string name="dialogo_ok">Ados</string>
+    <string name="dialogo_conexion_titulo">Beste gela batera konektatu</string>
+    <string name="dialogo_cancelar">Ezeztatu</string>
+    <string name="menu_establecer_espera">Itxaroteko denbora ezarri</string>
+    <string name="dialogo_establecer_espera_titulo">Itxaroteko denbora (minutuak)</string>
+    <string name="dialogo_guardar">Gorde</string>
+    <string name="menu_accion_borrar_aula">Gela ezabatu</string>
+    <string name="menu_accion_recuperar_aula">Gela berreskuratu</string>
+    <string name="menu_accion_anyadir_aula">Gela bat gehitu</string>
+    <string name="dialogo_confirmar_borrado_titulo">Gela ezabatu</string>
+    <string name="dialogo_confirmar_borrado_mensaje">Akzio honek itxaroten daudenen lerroa ezabatuko du.</string>
+    <string name="sonido_explicacion_on_off">Lehen ikaslea iristen denean abisatu.</string>
+    <string name="sonido_titulo">Soinua</string>
+    <string name="ajustes_titulo">Ezarpenak</string>
+    <string name="error_no_network">Ez dago sareko konexiorik</string>
+    <string name="menu_etiquetar_aula">Gela etiketatu</string>
+    <string name="dialogo_etiqueta_aula">Etiketa</string>
+    <string name="dialogo_etiquetar_aula_titulo">Gela etiketatu</string>
+    <string name="dialogo_etiquetar_aula_mensaje">Sartu etiketa berria.</string>
+</resources>

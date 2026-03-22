@@ -1,0 +1,57 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity">
+    <group
+        android:id="@+id/cabecera"
+        android:checkableBehavior="none"
+        android:enabled="false">
+        <item
+            android:id="@+id/etiqueta_pin"
+            android:checkable="false"
+            android:enabled="false"
+            android:title="@string/menu_etiqueta_invitado"
+            android:visible="true" />
+    </group>
+    <group
+        android:id="@+id/acciones"
+        android:enabled="true"
+        android:visible="true">
+        <item
+            android:id="@+id/accion_establecer_espera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:title="@string/menu_establecer_espera" />
+        <item
+            android:id="@+id/accion_etiquetar_aula"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:title="@string/menu_etiquetar_aula" />
+        <item
+            android:id="@+id/accion_anyadir_aula"
+            android:title="@string/menu_accion_anyadir_aula" />
+        <item
+            android:id="@+id/accion_borrar_aula"
+            android:title="@string/menu_accion_borrar_aula" />
+        <item
+            android:id="@+id/accion_conectar"
+            android:title="@string/menu_accion_conectar" />
+        <item
+            android:id="@+id/accion_desconectar"
+            android:title="@string/menu_accion_desconectar" />
+    </group>
+    <group android:id="@+id/ajustes">
+        <item
+            android:id="@+id/accion_ajustes"
+            android:orderInCategory="100"
+            android:title="@string/ajustes_titulo"
+            app:showAsAction="never" />
+    </group>
+    <group android:id="@+id/acerca_de">
+        <item
+            android:id="@+id/accion_acerca_de"
+            android:orderInCategory="100"
+            android:title="@string/menu_acerca_de"
+            app:showAsAction="never" />
+    </group>
+</menu>
