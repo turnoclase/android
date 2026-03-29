@@ -22,23 +22,13 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
-import com.jakewharton.threetenabp.AndroidThreeTen
 
-/**
- * Created by widemos on 19/6/15.
- */
 class App : MultiDexApplication() {
-
-    companion object {
-        var pedirTurno = true
-        var atendido = false
-    }
 
     override fun onCreate() {
         super.onCreate()
-        AndroidThreeTen.init(this)
 
-        FirebaseApp.initializeApp(/*context=*/this)
+        FirebaseApp.initializeApp(this)
         val firebaseAppCheck = FirebaseAppCheck.getInstance()
 
         if (!BuildConfig.DEBUG) {

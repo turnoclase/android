@@ -7,7 +7,7 @@
     <string name="boton_profesor">Irakaslea</string>
     <string name="etiqueta_aula">Ikasgela</string>
     <string name="etiqueta_bienvenido">Ongi etorria TurnoClase-ra</string>
-    <string name="etiqueta_introduce_datos">Sartu zure datuak esta sakatu konektatu.</string>
+    <string name="etiqueta_introduce_datos">Sartu zure datuak eta sakatu konektatu.</string>
     <string name="etiqueta_nombre_usuario">Izena</string>
     <string name="etiqueta_selecciona_rol">Aukeratu zure perfila:</string>
     <string name="etiqueta_turnos_restantes">Zure aurretik lerroan:</string>
@@ -19,4 +19,17 @@
     <string name="ESPERA">Itxaron txanda eskatzeko...</string>
     <string name="etiqueta_error">ERRORE</string>
     <string name="MENSAJE_ERROR">Gela zenbakia edo\nsare konexioa egiaztatu</string>
+    <string name="MENSAJE_ERROR_RED">Ez dago sareko konexiorik</string>
+    <string name="historico_titulo">Gelak</string>
+    <string name="historico_vacio">Historia gabe</string>
+    <string name="historico_sin_etiqueta">Etiketa gabe</string>
+    <string name="historico_etiqueta_titulo">Etiketa</string>
+    <string name="historico_etiqueta_mensaje">Sartu gela honentzako etiketa.</string>
+    <string name="historico_etiqueta_placeholder">Etiketa</string>
+    <string name="guardar">Gorde</string>
+    <string name="cancelar">Ezeztatu</string>
+    <string name="cerrar">Itxi</string>
+    <string name="editar">Editatu</string>
+    <string name="listo">Eginda</string>
+    <string name="eliminar">Ezabatu</string>
 </resources>

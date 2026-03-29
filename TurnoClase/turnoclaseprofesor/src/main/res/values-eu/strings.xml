@@ -17,7 +17,7 @@
     <string name="dialogo_ok">Ados</string>
     <string name="dialogo_conexion_titulo">Beste gela batera konektatu</string>
     <string name="dialogo_cancelar">Ezeztatu</string>
-    <string name="menu_establecer_espera">Itxaroteko denbora ezarri</string>
+    <string name="menu_establecer_espera">Itxaroteko denbora</string>
     <string name="dialogo_establecer_espera_titulo">Itxaroteko denbora (minutuak)</string>
     <string name="dialogo_guardar">Gorde</string>
     <string name="menu_accion_borrar_aula">Gela ezabatu</string>
@@ -33,4 +33,6 @@
     <string name="dialogo_etiqueta_aula">Etiketa</string>
     <string name="dialogo_etiquetar_aula_titulo">Gela etiketatu</string>
     <string name="dialogo_etiquetar_aula_mensaje">Sartu etiketa berria.</string>
+    <string name="cola_espera_titulo">Itxarote lerroa</string>
+    <string name="cola_vacia">Lerroa hutsik dago</string>
 </resources>

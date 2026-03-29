@@ -56,4 +56,17 @@
     <string name="ESPERA">Wait to request another turn...</string>
     <string name="etiqueta_error">ERROR</string>
     <string name="MENSAJE_ERROR">Check classroom number\nor network connection</string>
+    <string name="MENSAJE_ERROR_RED">No network connection</string>
+    <string name="historico_titulo">Classrooms</string>
+    <string name="historico_vacio">No history yet</string>
+    <string name="historico_sin_etiqueta">No label</string>
+    <string name="historico_etiqueta_titulo">Label</string>
+    <string name="historico_etiqueta_mensaje">Enter a label for this classroom.</string>
+    <string name="historico_etiqueta_placeholder">Label</string>
+    <string name="guardar">Save</string>
+    <string name="cancelar">Cancel</string>
+    <string name="cerrar">Close</string>
+    <string name="editar">Edit</string>
+    <string name="listo">Done</string>
+    <string name="eliminar">Delete</string>
 </resources>

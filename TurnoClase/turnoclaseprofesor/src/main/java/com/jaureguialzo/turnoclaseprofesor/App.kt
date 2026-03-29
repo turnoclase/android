@@ -18,7 +18,6 @@
 package com.jaureguialzo.turnoclaseprofesor
 
 import androidx.multidex.MultiDexApplication
-import com.droidnet.DroidNet
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
@@ -32,7 +31,6 @@ class App : MultiDexApplication() {
     // Detectar si la conexión de red está activa o no
     override fun onCreate() {
         super.onCreate()
-        DroidNet.init(this)
 
         FirebaseApp.initializeApp(/*context=*/this)
         val firebaseAppCheck = FirebaseAppCheck.getInstance()
@@ -46,10 +44,5 @@ class App : MultiDexApplication() {
                 DebugAppCheckProviderFactory.getInstance()
             )
         }
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        DroidNet.getInstance().removeAllInternetConnectivityChangeListeners()
     }
 }

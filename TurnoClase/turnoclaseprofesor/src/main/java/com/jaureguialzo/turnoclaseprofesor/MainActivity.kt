@@ -17,1047 +17,189 @@
 
 package com.jaureguialzo.turnoclaseprofesor
 
-import android.animation.ObjectAnimator
-import android.annotation.SuppressLint
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
-import android.content.res.Configuration
-import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Bundle
-import android.text.InputFilter
-import android.util.Log
-import android.view.Menu
-import android.view.MotionEvent
-import android.view.View
-import android.widget.EditText
-import android.widget.NumberPicker
-import android.widget.ProgressBar
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.MenuCompat
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentStatePagerAdapter
-import androidx.preference.PreferenceManager
-import androidx.viewpager.widget.ViewPager.OnPageChangeListener
-import com.droidnet.DroidListener
-import com.droidnet.DroidNet
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.*
-import com.google.firebase.functions.FirebaseFunctions
-import com.google.firebase.functions.FirebaseFunctionsException
-import com.jaureguialzo.turnoclaseprofesor.databinding.ActivityMainBinding
-import com.rd.PageIndicatorView
-import java.util.*
-import kotlin.collections.HashMap
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jaureguialzo.turnoclaseprofesor.ui.components.ListaColaAlumnos
+import com.jaureguialzo.turnoclaseprofesor.ui.components.MenuAccionesAula
+import com.jaureguialzo.turnoclaseprofesor.ui.dialogs.DialogoConexion
+import com.jaureguialzo.turnoclaseprofesor.ui.dialogs.DialogoEtiqueta
+import com.jaureguialzo.turnoclaseprofesor.ui.dialogs.DialogoTiempoEspera
+import com.jaureguialzo.turnoclaseprofesor.ui.screens.AjustesScreen
+import com.jaureguialzo.turnoclaseprofesor.ui.screens.PantallaPrincipalScreen
+import com.jaureguialzo.turnoclaseprofesor.ui.theme.TurnoClaseProfesorTheme
+import com.jaureguialzo.turnoclaseprofesor.viewmodel.AulaViewModel
 
-class MainActivity : AppCompatActivity(), DroidListener {
+class MainActivity : ComponentActivity() {
 
-    // ID de usuario único generado por Firebase
-    private var uid: String? = null
-
-    // Conectar a otro aula
-    private var invitado: Boolean = false
-        set(value) {
-            field = value
-            pageIndicatorView?.visibility = if (value) View.INVISIBLE else View.VISIBLE
-        }
-
-    // Listeners para recibir las actualizaciones
-    private var listenerAula: ListenerRegistration? = null
-    private var listenerCola: ListenerRegistration? = null
-
-    // Referencias al documento del aula y la posición en la cola
-    private var refAula: DocumentReference? = null
-    private var refMisAulas: CollectionReference? = null
-
-    // Para simular el interfaz al hacer las capturas
-    private var n = 2
-
-    // Activar Firestore
-    private val db = FirebaseFirestore.getInstance()
-    private var mAuth: FirebaseAuth? = null
-
-    private var functions = FirebaseFunctions.getInstance("europe-west1")
-
-    // Datos del aula
-    private var codigoAula = "..."
-    private var PIN = "..."
-    private var tiempoEspera = -1
-    private var etiquetaAula = ""
-
-    // Almacenar el número de alumnos anterior para detectar el paso de 0 a 1 y reproducir el sonido
-    private var recuentoAnterior = 0
-
-    // REF: Detectar si estamos en modo test: https://stackoverflow.com/a/40220621/5136913
-    private val isRunningTest: Boolean by lazy {
-        try {
-            Class.forName("androidx.test.espresso.Espresso")
-            Log.d(TAG, "Estamos en modo test")
-            true
-        } catch (e: ClassNotFoundException) {
-            false
-        }
-    }
-
-    private val MAX_AULAS = 16
-    private var aulaActual = 0
-    private var numAulas: Int = 0
-        set(value) {
-            field = value
-            adapter?.notifyDataSetChanged()
-            ocultarIndicador()
-            if (aulaActual == value) {
-                aulaActual -= 1
-                binding.viewPager.currentItem -= 1
-            }
-        }
-
-    private var adapter: ScreenSlidePagerAdapter? = null
-    private var pageIndicatorView: PageIndicatorView? = null
-    private var indicadorActividad: ProgressBar? = null
-
-    // Soporte para varias aulas
-    private inner class ScreenSlidePagerAdapter(fm: FragmentManager) :
-        FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
-
-        override fun getCount(): Int = numAulas
-
-        override fun getItem(position: Int): Fragment = Fragment()
-
-    }
-
-    fun ocultarIndicador() {
-        indicadorActividad?.visibility = View.INVISIBLE
-    }
-
-    fun mostrarIndicador() {
-        indicadorActividad?.visibility = View.VISIBLE
-    }
-
-    private var mDroidNet: DroidNet? = null
-
-    // Binding para acceso al UI de la actividad
-    private lateinit var binding: ActivityMainBinding
-
-    @SuppressLint("ClickableViewAccessibility")
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
-        // Detectar si la conexión de red está activa o no
-        mDroidNet = DroidNet.getInstance();
-        mDroidNet!!.addInternetConnectivityListener(this);
+        setContent {
+            TurnoClaseProfesorTheme {
+                val vm: AulaViewModel = viewModel()
 
-        // Configurar las opciones de Firebase
-        val settings = FirebaseFirestoreSettings.Builder()
-            .setPersistenceEnabled(false)
-            .build()
-        db.firestoreSettings = settings
+                LaunchedEffect(Unit) { vm.iniciar() }
 
-        // Ocultar la barra de título en horizontal en pantallas pequeñas
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE &&
-            !resources.configuration.isLayoutSizeAtLeast(Configuration.SCREENLAYOUT_SIZE_LARGE)
-        )
-            supportActionBar!!.hide()
-        else
-            supportActionBar!!.show()
+                // Estado de diálogos
+                var mostrarMenuAcciones by remember { mutableStateOf(false) }
+                var mostrarDialogoConexion by remember { mutableStateOf(false) }
+                var mostrarDialogoBorrar by remember { mutableStateOf(false) }
+                var mostrarDialogoEtiqueta by remember { mutableStateOf(false) }
+                var mostrarDialogoTiempo by remember { mutableStateOf(false) }
+                var mostrarListaCola by remember { mutableStateOf(false) }
+                var mostrarAjustes by remember { mutableStateOf(false) }
 
-        // Cargar el layout
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
+                // Pantalla principal
+                PantallaPrincipalScreen(
+                    vm = vm,
+                    onMostrarMenu = { mostrarMenuAcciones = true },
+                    onMostrarCola = { mostrarListaCola = true }
+                )
 
-        // Paginador: https://github.com/romandanylyk/PageIndicatorView
-        pageIndicatorView = findViewById(R.id.pageIndicatorView)
-
-        indicadorActividad = findViewById(R.id.progressBar)
-
-        adapter = ScreenSlidePagerAdapter(supportFragmentManager)
-        binding.viewPager.adapter = adapter
-
-        binding.viewPager.addOnPageChangeListener(object : OnPageChangeListener {
-            override fun onPageScrolled(
-                position: Int,
-                positionOffset: Float,
-                positionOffsetPixels: Int
-            ) {
-            }
-
-            override fun onPageSelected(position: Int) {
-                if (!invitado) {
-                    aulaActual = position
-                    Log.d(TAG, "Cargado aula en posición: " + aulaActual)
-
-                    desconectarListeners()
-                    conectarAula(aulaActual)
+                // Alerta de error de conexión
+                if (vm.mostrarAlertaErrorConexion) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { vm.mostrarAlertaErrorConexion = false },
+                        title = { androidx.compose.material3.Text(getString(R.string.dialogo_error_titulo)) },
+                        text = { androidx.compose.material3.Text(getString(R.string.dialogo_error_mensaje)) },
+                        confirmButton = {
+                            androidx.compose.material3.TextButton(onClick = { vm.mostrarAlertaErrorConexion = false }) {
+                                androidx.compose.material3.Text(getString(R.string.dialogo_ok))
+                            }
+                        }
+                    )
                 }
-            }
 
-            override fun onPageScrollStateChanged(state: Int) {
-            }
-        })
-
-        // Ver si estamos en modo test, haciendo capturas de pantalla
-        if (isRunningTest) {
-            actualizarAula("BE131", 0)
-            actualizarMensaje("")
-            PIN = "1234"
-            numAulas = 2
-        } else {
-
-            // Limpiar el UI
-            actualizarAula("...", 0)
-            actualizarMensaje("")
-
-            ocultarIndicador()
-
-            // Iniciar sesión y conectar al aula
-            mAuth = FirebaseAuth.getInstance()
-
-            mAuth!!.signInAnonymously()
-                .addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-
-                        uid = mAuth?.currentUser?.uid
-                        Log.d(TAG, "Registrado como usuario con UID: $uid")
-
-                        val preferences: SharedPreferences =
-                            getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
-
-                        // Si ya tenemos un uid anterior, usarlo
-                        val uidAnterior = preferences.getString("uidAnterior", "") ?: ""
-
-                        if (uidAnterior.isNotEmpty() && uidAnterior != uid) {
-                            uid = uidAnterior
-                            Log.d(TAG, "Ya estaba registrado como usuario con UID: $uidAnterior")
-                        } else {
-                            val editor = preferences.edit()
-                            editor.putString("uidAnterior", uid)
-                            editor.apply()
+                // Diálogo confirmar borrado
+                if (mostrarDialogoBorrar) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { mostrarDialogoBorrar = false },
+                        title = { androidx.compose.material3.Text(getString(R.string.dialogo_confirmar_borrado_titulo)) },
+                        text = { androidx.compose.material3.Text(getString(R.string.dialogo_confirmar_borrado_mensaje)) },
+                        confirmButton = {
+                            androidx.compose.material3.TextButton(onClick = {
+                                vm.borrarAulaReconectar(vm.codigoAula)
+                                mostrarDialogoBorrar = false
+                            }) {
+                                androidx.compose.material3.Text(getString(R.string.dialogo_ok))
+                            }
+                        },
+                        dismissButton = {
+                            androidx.compose.material3.TextButton(onClick = { mostrarDialogoBorrar = false }) {
+                                androidx.compose.material3.Text(getString(R.string.dialogo_cancelar))
+                            }
                         }
+                    )
+                }
 
-                        // Si hemos estado conectados a otro aula, recuperarla
-                        val codigoAulaConectada =
-                            preferences.getString("codigoAulaConectada", "") ?: ""
-                        val pinConectada = preferences.getString("pinConectada", "") ?: ""
-
-                        if (codigoAulaConectada.isNotEmpty() && pinConectada.isNotEmpty()) {
-                            buscarAula(codigoAulaConectada, pinConectada)
-                        } else {
-                            conectarAula()
-                        }
-                    } else {
-                        Log.e(TAG, "Error de inicio de sesión", task.exception)
-                        actualizarAula("?", 0)
+                // Menú de acciones (bottom sheet)
+                if (mostrarMenuAcciones) {
+                    ModalBottomSheet(
+                        onDismissRequest = { mostrarMenuAcciones = false },
+                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+                    ) {
+                        MenuAccionesAula(
+                            vm = vm,
+                            onEtiquetar = { mostrarDialogoEtiqueta = true },
+                            onTiempo = { mostrarDialogoTiempo = true },
+                            onConectar = { mostrarDialogoConexion = true },
+                            onBorrar = { mostrarDialogoBorrar = true },
+                            onAjustes = { mostrarAjustes = true },
+                            onCerrar = { mostrarMenuAcciones = false }
+                        )
                     }
                 }
-        }
 
-        // Evento del botón botonCodigoAula (vaciar el aula)
-        binding.botonCodigoAula.setOnClickListener {
-            botonCodigoAulaCorto()
-        }
-
-        // Evento del botón botonCodigoAula (crear nueva aula)
-        binding.botonCodigoAula.setOnLongClickListener {
-            botonCodigoAulaLargo()
-            true
-        }
-
-        // Evento del botón Siguiente
-        binding.botonSiguiente.setOnClickListener {
-            botonSiguiente()
-        }
-
-        // Evento del botón botonEnCola
-        binding.botonEnCola.setOnClickListener {
-            botonEnCola()
-        }
-
-        // Animación del botón Siguiente
-        binding.botonSiguiente.setOnTouchListener { v, event ->
-            animarBoton(event, v, "botonSiguiente")
-            false
-        }
-
-        // Animación del botón botonEnCola
-        binding.botonEnCola.setOnTouchListener { v, event ->
-            animarBoton(event, v, "botonEnCola")
-            false
-        }
-
-        // Animación del botón botonCodigoAula
-        binding.botonCodigoAula.setOnTouchListener { v, event ->
-            animarBoton(event, v, "botonCodigoAula")
-            false
-        }
-
-    }
-
-    private fun conectarAula(posicion: Int = 0) {
-
-        // Colección que contiene las aulas del usuario
-        refMisAulas = db.collection("profesores").document(uid!!).collection("aulas")
-
-        // Cargar el aula y si no, crearla
-        refMisAulas!!.orderBy("timestamp")
-            .get()
-            .addOnSuccessListener { result ->
-
-                numAulas = if (!invitado) result.documents.count() else 1
-                adapter?.notifyDataSetChanged()
-
-                if (posicion >= 0 && posicion < numAulas) {
-
-                    var seleccionada = result.documents[posicion]
-
-                    if (seleccionada != null) {
-                        Log.i(TAG, "Conectado a aula existente")
-                        this.refAula = seleccionada.reference
-                        conectarListener()
-                    }
-                } else {
-                    Log.i(TAG, "Creando nueva aula...")
-                    crearAula()
-                }
-            }
-            .addOnFailureListener { exception ->
-                Log.e(TAG, "Error al conectar al aula", exception)
-                actualizarAula("?", 0)
-            }
-    }
-
-    private fun crearAula() {
-
-        if (networkAvailable)
-            mostrarIndicador()
-
-        // REF: Llamar a la función Cloud (en Android se hace en dos pasos): https://firebase.google.com/docs/functions/callable#call_the_function
-        obtenerNuevoCodigo()
-            .addOnCompleteListener(OnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    Log.e(TAG, task.exception.toString())
-                } else {
-
-                    val codigo = task.result?.get("codigo") as String
-
-                    // REF: Enteros aleatorios en Kotlin: https://stackoverflow.com/a/45687695
-                    fun IntRange.random() = Random().nextInt((endInclusive + 1) - start) + start
-
-                    // Guardar el documento
-                    val datos = HashMap<String, Any>()
-                    datos["codigo"] = codigo
-                    datos["timestamp"] = FieldValue.serverTimestamp()
-                    datos["pin"] = "%04d".format((0..9999).random())
-                    datos["espera"] = 5
-
-                    // Almacenar la referencia a la nueva aula
-                    refMisAulas!!.add(datos)
-                        .addOnSuccessListener { nueva ->
-                            Log.d(TAG, "Aula creada")
-                            refAula = nueva
-                            numAulas += 1
-                            conectarListener()
-                        }
-                        .addOnFailureListener { e -> Log.e(TAG, "Error al crear el aula", e) }
-                }
-            })
-    }
-
-    private fun anyadirAula() {
-
-        mostrarIndicador()
-
-        // REF: Llamar a la función Cloud (en Android se hace en dos pasos): https://firebase.google.com/docs/functions/callable#call_the_function
-        obtenerNuevoCodigo()
-            .addOnCompleteListener(OnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    val e = task.exception
-                    if (e is FirebaseFunctionsException) {
-                        Log.e(TAG, e.details as String)
-                    }
-                } else {
-
-                    val codigo = task.result?.get("codigo") as String
-
-                    // REF: Enteros aleatorios en Kotlin: https://stackoverflow.com/a/45687695
-                    fun IntRange.random() = Random().nextInt((endInclusive + 1) - start) + start
-
-                    // Guardar el documento
-                    val datos = HashMap<String, Any>()
-                    datos["codigo"] = codigo
-                    datos["timestamp"] = FieldValue.serverTimestamp()
-                    datos["pin"] = "%04d".format((0..9999).random())
-                    datos["espera"] = 5
-
-                    // Almacenar la referencia a la nueva aula
-                    refMisAulas!!.add(datos)
-                        .addOnSuccessListener {
-                            Log.d(TAG, "Aula creada")
-                            numAulas += 1
-                        }
-                        .addOnFailureListener { e -> Log.e(TAG, "Error al crear el aula", e) }
-                }
-            })
-    }
-
-    private fun obtenerNuevoCodigo(): Task<HashMap<String, String>> {
-
-        val data = hashMapOf(
-            "keepalive" to false
-        )
-
-        return functions
-            .getHttpsCallable("nuevoCodigo")
-            .call(data)
-            .continueWith { task ->
-                @Suppress("UNCHECKED_CAST")
-                task.result?.getData() as HashMap<String, String>
-            }
-    }
-
-    private fun conectarListener() {
-
-        // Conectar el listener del aula para detectar cambios (por ejemplo, que se borra)
-        if (listenerAula == null) {
-            listenerAula = refAula!!.addSnapshotListener { snapshot, _ ->
-
-                if (snapshot != null && snapshot.exists()) {
-                    refAula = snapshot.reference
-
-                    val aula = snapshot.data
-                    Log.d(TAG, "Actualizando datos del aula")
-
-                    val codigoAula = aula!!["codigo"] as? String ?: "?"
-                    val pin = aula["pin"] as? String ?: "?"
-                    tiempoEspera = (aula["espera"] as? Long ?: 5).toInt()
-                    etiquetaAula = aula["etiqueta"] as? String ?: ""
-
-                    actualizarAula(codigoAula)
-                    actualizarPIN(pin)
-
-                    // Listener de la cola
-                    if (listenerCola == null) {
-                        listenerCola = refAula!!.collection("cola")
-                            .addSnapshotListener { querySnapshot, error ->
-
-                                if (error != null) {
-                                    Log.e(TAG, "Error al recuperar datos: ", error)
+                // Diálogo conectar a otra aula (bottom sheet)
+                if (mostrarDialogoConexion) {
+                    ModalBottomSheet(
+                        onDismissRequest = { mostrarDialogoConexion = false },
+                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                    ) {
+                        DialogoConexion(
+                            onConectar = { codigo, pin ->
+                                if (vm.codigoAula != codigo) {
+                                    vm.buscarAula(codigo = codigo, pin = pin)
                                 } else {
-                                    actualizarAula(querySnapshot!!.documents.count())
-                                    mostrarSiguiente()
+                                    vm.mostrarAlertaErrorConexion = true
                                 }
-                            }
-                    }
-
-                } else {
-                    Log.d(TAG, "El aula ha desaparecido")
-
-                    // Detectar si el aula desaparece y si somos invitados, desconectar
-                    if (!invitado) {
-                        actualizarAula("?", 0)
-                    } else {
-                        desconectarAula()
-                    }
-
-                }
-            }
-        }
-    }
-
-    private fun mostrarSiguiente(avanzarCola: Boolean = false) {
-
-        Log.d(TAG, "Mostrando el siguiente alumno...")
-
-        if (refAula != null) {
-
-            refAula!!.collection("cola").orderBy("timestamp").get()
-                .addOnCompleteListener { querySnapshot ->
-                    if (!querySnapshot.isSuccessful) {
-                        Log.e(TAG, "Error al recuperar datos: ", querySnapshot.exception)
-                    } else {
-                        if (querySnapshot.result!!.count() > 0) {
-                            val refPosicion = querySnapshot.result!!.documents[0].reference
-
-                            refPosicion.get().addOnCompleteListener {
-                                val posicion = it.result
-
-                                // Cargar el alumno
-                                db.collection("alumnos").document(posicion!!["alumno"] as String)
-                                    .get()
-                                    .addOnCompleteListener { document ->
-                                        if (document.isSuccessful) {
-                                            if (document.result!!.exists()) {
-                                                val alumno = document.result
-
-                                                // Mostrar el nombre
-                                                actualizarMensaje(alumno!!["nombre"] as String)
-
-                                                // Borrar la entrada de la cola
-                                                if (avanzarCola) {
-
-                                                    // Marcar cuando hemos atendido al alumno
-                                                    val datos = HashMap<String, Any>()
-                                                    datos["timestamp"] =
-                                                        FieldValue.serverTimestamp()
-
-                                                    refAula!!.collection("espera")
-                                                        .document(posicion["alumno"] as String)
-                                                        .set(datos)
-                                                        .addOnFailureListener { e ->
-                                                            Log.e(
-                                                                TAG,
-                                                                "Error al añadir el documento",
-                                                                e
-                                                            )
-                                                        }
-
-                                                    refPosicion.delete()
-                                                }
-                                            } else {
-                                                Log.e(TAG, "El alumno no existe")
-                                                actualizarMensaje("?")
-                                            }
-                                        } else {
-                                            Log.e(TAG, "Error al recuperar datos: ", it.exception)
-                                        }
-                                    }
-                            }
-                        } else {
-                            Log.d(TAG, "Cola vacía")
-                            if (codigoAula != "?") {
-                                actualizarMensaje("")
-                            } else {
-                                actualizarMensaje(getString(R.string.error_no_network))
-                            }
-                        }
+                                mostrarDialogoConexion = false
+                            },
+                            onCancelar = { mostrarDialogoConexion = false }
+                        )
                     }
                 }
-        }
-    }
 
-    private fun botonSiguiente() {
-        mostrarSiguiente(true)
-    }
+                // Diálogo etiquetar aula (bottom sheet)
+                if (mostrarDialogoEtiqueta) {
+                    ModalBottomSheet(
+                        onDismissRequest = { mostrarDialogoEtiqueta = false },
+                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                    ) {
+                        DialogoEtiqueta(
+                            etiquetaActual = vm.etiquetaAula,
+                            onGuardar = { etiqueta ->
+                                vm.actualizarEtiqueta(etiqueta)
+                                mostrarDialogoEtiqueta = false
+                            },
+                            onCancelar = { mostrarDialogoEtiqueta = false }
+                        )
+                    }
+                }
 
-    private fun botonEnCola() {
+                // Diálogo tiempo de espera (bottom sheet)
+                if (mostrarDialogoTiempo) {
+                    ModalBottomSheet(
+                        onDismissRequest = { mostrarDialogoTiempo = false },
+                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                    ) {
+                        DialogoTiempoEspera(
+                            tiempos = vm.tiempos,
+                            tiempoActual = vm.tiempoEspera,
+                            onGuardar = { tiempo ->
+                                vm.actualizarTiempoEspera(tiempo)
+                                mostrarDialogoTiempo = false
+                            },
+                            onCancelar = { mostrarDialogoTiempo = false }
+                        )
+                    }
+                }
 
-        Log.d("TurnoClase", "Este botón sólo se usa para los test de UI")
+                // Lista de alumnos en cola (bottom sheet)
+                if (mostrarListaCola) {
+                    ModalBottomSheet(
+                        onDismissRequest = { mostrarListaCola = false },
+                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                    ) {
+                        ListaColaAlumnos(
+                            vm = vm,
+                            onCerrar = { mostrarListaCola = false }
+                        )
+                    }
+                }
 
-        if (isRunningTest) {
-            if (n >= 0) {
-                actualizarAula(n)
-                actualizarMensaje(Nombres().aleatorio())
-            } else {
-                actualizarAula(0)
-                actualizarMensaje("")
-            }
-
-            n -= 1
-        }
-    }
-
-    private fun botonCodigoAulaCorto() {
-
-        //Log.d(TAG, "Vaciando el aula...")
-        // Pendiente de implementar en el servidor, no se puede borrar una colección desde el cliente
-        // REF: https://firebase.google.com/docs/firestore/manage-data/delete-data?hl=es-419
-
-        // Menú de acciones para gestionar múltiples profesores
-        //mostrarAcciones()
-
-    }
-
-    private fun botonCodigoAulaLargo() {
-        // Anulado
-    }
-
-    private fun desconectarListeners() {
-
-        listenerAula?.remove()
-        listenerAula = null
-
-        listenerCola?.remove()
-        listenerCola = null
-
-    }
-
-    private fun desconectarAula() {
-
-        // Borrar el aula y el pin al que hemos estado conectados
-        val preferences: SharedPreferences =
-            getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
-
-        val editor = preferences.edit()
-        editor.remove("codigoAulaConectada")
-        editor.remove("pinConectada")
-        editor.apply()
-
-        invitado = false
-        desconectarListeners()
-        conectarAula(aulaActual)
-    }
-
-    private fun borrarAulaReconectar(codigoAula: String) {
-
-        mostrarIndicador()
-
-        desconectarListeners()
-
-        refMisAulas!!.whereEqualTo("codigo", codigoAula.uppercase(Locale.getDefault()))
-            .get()
-            .addOnSuccessListener { result ->
-
-                result.documents.first().reference.delete().addOnCompleteListener {
-                    if (!it.isSuccessful) {
-                        Log.e(TAG, "Error al borrar el aula: ", it.exception)
-                    } else {
-                        Log.d(TAG, "Aula borrada")
-                        numAulas -= 1
-                        conectarAula(aulaActual)
+                // Ajustes (bottom sheet)
+                if (mostrarAjustes) {
+                    ModalBottomSheet(
+                        onDismissRequest = { mostrarAjustes = false },
+                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                    ) {
+                        AjustesScreen(
+                            vm = vm,
+                            onCerrar = { mostrarAjustes = false }
+                        )
                     }
                 }
             }
-            .addOnFailureListener { exception ->
-                Log.e(TAG, "Error al borrar el aula", exception)
-            }
-    }
-
-    private fun actualizarAula(codigo: String = "?", enCola: Int = -1) {
-        actualizarAula(codigo)
-        actualizarAula(enCola)
-    }
-
-    private fun actualizarAula(codigo: String) {
-        binding.botonCodigoAula.text = codigo
-        codigoAula = codigo
-        Log.d(TAG, "Aula: $codigoAula")
-        supportActionBar?.subtitle = etiquetaAula
-    }
-
-    private fun actualizarAula(enCola: Int) {
-        if (enCola != -1) {
-
-            val sonidoActivado =
-                PreferenceManager.getDefaultSharedPreferences(this).getBoolean("sonido", true)
-
-            if (sonidoActivado && recuentoAnterior == 0 && enCola == 1) {
-                try {
-                    val notification: Uri =
-                        RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                    val r = RingtoneManager.getRingtone(applicationContext, notification)
-                    r.play()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-            recuentoAnterior = enCola
-
-            binding.botonEnCola.text = enCola.toString()
-        } else
-            binding.botonEnCola.text = "..."
-        Log.d(TAG, "Alumnos en cola: $enCola")
-    }
-
-    private fun actualizarMensaje(texto: String = "?") {
-        binding.etiquetaNombreAlumno.text = texto
-    }
-
-    private fun actualizarPIN(pin: String) {
-        this.PIN = pin
-    }
-
-    // Crear el menú de acciones
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
-
-        // REF: Mostrar los separadores: https://stackoverflow.com/a/51500113
-        MenuCompat.setGroupDividerEnabled(menu, true);
-
-        return true
-    }
-
-    // Menú de acciones
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val result = super.onPrepareOptionsMenu(menu)
-
-        // REF: Dar formato a strings localizados: https://developer.android.com/guide/topics/resources/string-resource?hl=es-419#dar-formato-a-las-strings
-        if (!invitado) {
-            if (codigoAula == "?")
-                menu.findItem(R.id.etiqueta_pin).title = getString(R.string.error_no_network)
-            else
-                menu.findItem(R.id.etiqueta_pin).title =
-                    String.format(getString(R.string.menu_etiqueta_pin), PIN)
-        } else {
-            menu.findItem(R.id.etiqueta_pin).title = getString(R.string.menu_etiqueta_invitado)
-        }
-
-        menu.findItem(R.id.accion_acerca_de).setOnMenuItemClickListener {
-            startActivity(Intent(this@MainActivity, AcercaDe::class.java))
-            true
-        }
-
-        menu.findItem(R.id.accion_ajustes).setOnMenuItemClickListener {
-            startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
-            true
-        }
-
-        if (!invitado && numAulas < MAX_AULAS && codigoAula != "?") {
-            menu.findItem(R.id.accion_anyadir_aula).isVisible = true
-            menu.findItem(R.id.accion_anyadir_aula).setOnMenuItemClickListener {
-                Log.d("TurnoClase", "Añadir aula")
-                anyadirAula()
-                true
-            }
-        } else {
-            menu.findItem(R.id.accion_anyadir_aula).isVisible = false
-        }
-
-        if (!invitado && numAulas > 1 && codigoAula != "?") {
-            menu.findItem(R.id.accion_borrar_aula).isVisible = true
-            menu.findItem(R.id.accion_borrar_aula).setOnMenuItemClickListener {
-                Log.d("TurnoClase", "Borrar aula")
-                dialogoConfirmarBorrado()
-                true
-            }
-        } else {
-            menu.findItem(R.id.accion_borrar_aula).isVisible = false
-        }
-
-        if (!invitado && codigoAula != "?") {
-            menu.findItem(R.id.accion_establecer_espera).isVisible = true
-            menu.findItem(R.id.accion_establecer_espera).setOnMenuItemClickListener {
-                Log.d("TurnoClase", "Establecer tiempo de espera")
-                dialogoTiempoEspera()
-                true
-            }
-        } else {
-            menu.findItem(R.id.accion_establecer_espera).isVisible = false
-        }
-
-        if (!invitado && codigoAula != "?") {
-            menu.findItem(R.id.accion_etiquetar_aula).isVisible = true
-            menu.findItem(R.id.accion_etiquetar_aula).setOnMenuItemClickListener {
-                Log.d("TurnoClase", "Etiquetar aula")
-                dialogoEtiquetarAula()
-                true
-            }
-        } else {
-            menu.findItem(R.id.accion_etiquetar_aula).isVisible = false
-        }
-
-        if (codigoAula != "?") {
-            if (!invitado) {
-                menu.findItem(R.id.accion_conectar).isVisible = true
-                menu.findItem(R.id.accion_desconectar).isVisible = false
-
-                menu.findItem(R.id.accion_conectar).setOnMenuItemClickListener {
-                    Log.d("TurnoClase", "Conectar a otra aula")
-                    dialogoConexion()
-                    true
-                }
-            } else {
-                menu.findItem(R.id.accion_conectar).isVisible = false
-                menu.findItem(R.id.accion_desconectar).isVisible = true
-
-                menu.findItem(R.id.accion_desconectar).setOnMenuItemClickListener {
-                    Log.d("TurnoClase", "Desconectar del aula")
-                    desconectarAula()
-                    true
-                }
-            }
-        } else {
-            menu.findItem(R.id.accion_conectar).isVisible = false
-            menu.findItem(R.id.accion_desconectar).isVisible = false
-        }
-
-        return result
-    }
-
-    private fun dialogoConexion() {
-
-        // REF: AlertDialog: https://stackoverflow.com/a/10904665
-        // REF: Diseño personalizado: https://developer.android.com/guide/topics/ui/dialogs?hl=es-419#CustomLayout
-
-        val builder = AlertDialog.Builder(this)
-
-        builder.setTitle(getString(R.string.dialogo_conexion_titulo))
-        builder.setMessage(getString(R.string.dialogo_conexion_mensaje))
-
-        val vista = layoutInflater.inflate(R.layout.dialogo_conectar, null)
-
-        builder.setView(vista)
-
-        // Set up the input
-        val inputCodigo = vista.findViewById(R.id.conectar_codigo) as EditText
-        val inputPIN = vista.findViewById(R.id.conectar_pin) as EditText
-
-        inputCodigo.filters.plus(InputFilter.AllCaps())
-
-        // Set up the buttons
-        builder.setPositiveButton(getString(R.string.dialogo_conexion_conectar)) { _, _ ->
-
-            Log.d(TAG, "Conectando a otra aula")
-
-            val codigoAula = inputCodigo.text.toString()
-            val PIN = inputPIN.text.toString()
-
-            if (codigoAula != this.codigoAula) {
-                buscarAula(codigoAula, PIN)
-            } else {
-                Log.e(TAG, "No se puede conectar a la propia aula en que estamos")
-                dialogoError()
-            }
-
-        }
-
-        builder.setNegativeButton(getString(R.string.dialogo_cancelar)) { dialog, _ ->
-            Log.d(TAG, "Cancelado")
-            dialog.cancel()
-        }
-
-        builder.show()
-    }
-
-    private fun dialogoEtiquetarAula() {
-
-        val builder = AlertDialog.Builder(this)
-
-        builder.setTitle(getString(R.string.dialogo_etiquetar_aula_titulo))
-        builder.setMessage(getString(R.string.dialogo_etiquetar_aula_mensaje))
-
-        val vista = layoutInflater.inflate(R.layout.dialogo_etiquetar_aula, null)
-
-        builder.setView(vista)
-
-        // Set up the input
-        val inputEtiqueta = vista.findViewById(R.id.etiqueta_aula) as EditText
-
-        // Set up the buttons
-        builder.setPositiveButton(getString(R.string.dialogo_guardar)) { _, _ ->
-
-            Log.d(TAG, "Guardando la etiqueta del aula")
-
-            etiquetaAula = inputEtiqueta.text.toString()
-
-            val datos = HashMap<String, Any>()
-            datos["etiqueta"] = etiquetaAula
-
-            refAula!!.update(datos)
-                .addOnSuccessListener {
-                    Log.d(TAG, "Aula actualizada")
-                    conectarListener()
-                }
-                .addOnFailureListener { e -> Log.e(TAG, "Error al actualizar el aula", e) }
-        }
-
-        builder.setNegativeButton(getString(R.string.dialogo_cancelar)) { dialog, _ ->
-            Log.d(TAG, "Cancelado")
-            dialog.cancel()
-        }
-
-        builder.show()
-    }
-
-    private fun dialogoTiempoEspera() {
-
-        // REF: AlertDialog: https://stackoverflow.com/a/10904665
-        // REF: Diseño personalizado: https://developer.android.com/guide/topics/ui/dialogs?hl=es-419#CustomLayout
-
-        val builder = AlertDialog.Builder(this)
-
-        builder.setTitle(getString(R.string.dialogo_establecer_espera_titulo))
-
-        val vista = layoutInflater.inflate(R.layout.dialogo_establecer_espera, null)
-
-        builder.setView(vista)
-
-        // Set up the input
-
-        val picker = vista.findViewById(R.id.picker) as NumberPicker
-
-        val tiempos = arrayOf("0", "1", "2", "3", "5", "10", "15", "20", "30", "45", "60")
-
-        picker.minValue = 0
-        picker.maxValue = tiempos.size - 1
-        picker.displayedValues = tiempos
-        picker.wrapSelectorWheel = false
-        picker.value = tiempos.indexOfFirst {
-            it == tiempoEspera.toString()
-        }
-
-        // Set up the buttons
-        builder.setPositiveButton(getString(R.string.dialogo_guardar)) { _, _ ->
-
-            Log.d(TAG, "Conectando a otra aula")
-
-            tiempoEspera = tiempos[picker.value].toInt()
-            Log.d(TAG, "Establecer tiempo de espera en $tiempoEspera minutos...")
-
-            val datos = HashMap<String, Any>()
-            datos["espera"] = tiempoEspera
-
-            refAula!!.update(datos)
-                .addOnSuccessListener {
-                    Log.d(TAG, "Aula actualizada")
-                    conectarListener()
-                }
-                .addOnFailureListener { e -> Log.e(TAG, "Error al actualizar el aula", e) }
-        }
-
-        builder.setNegativeButton(getString(R.string.dialogo_cancelar)) { dialog, _ ->
-            Log.d(TAG, "Cancelado")
-            dialog.cancel()
-        }
-
-        builder.show()
-    }
-
-    private fun dialogoConfirmarBorrado() {
-
-        val builder = AlertDialog.Builder(this)
-
-        builder.setTitle(getString(R.string.dialogo_confirmar_borrado_titulo))
-        builder.setMessage(getString(R.string.dialogo_confirmar_borrado_mensaje))
-
-        // Set up the buttons
-        builder.setPositiveButton(getString(R.string.dialogo_ok)) { _, _ ->
-            Log.d(TAG, "Borrando el aula...")
-            borrarAulaReconectar(codigoAula)
-        }
-
-        builder.setNegativeButton(getString(R.string.dialogo_cancelar)) { dialog, _ ->
-            Log.d(TAG, "Cancelado")
-            dialog.cancel()
-        }
-
-        builder.show()
-    }
-
-    private fun buscarAula(codigo: String, pin: String) {
-
-        Log.d(TAG, "Buscando UID del aula:$codigo:$pin")
-
-        // Buscar el aula
-        db.collectionGroup("aulas")
-            .whereEqualTo("codigo", codigo.uppercase(Locale.getDefault()))
-            .whereEqualTo("pin", pin)
-            .get()
-            .addOnCompleteListener {
-                if (!it.isSuccessful) {
-                    Log.e(TAG, "Error al recuperar datos: ", it.exception)
-                } else {
-
-                    // Comprobar que se han recuperado registros
-                    if (it.result!!.count() > 0) {
-                        // Accedemos al primer documento
-                        val document = it.result!!.documents.first()
-
-                        Log.d(TAG, "Aula encontrada")
-
-                        // Guardar el aula y el pin para poder reconectar
-                        val preferences: SharedPreferences =
-                            getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
-
-                        val editor = preferences.edit()
-                        editor.putString("codigoAulaConectada", codigo)
-                        editor.putString("pinConectada", pin)
-                        editor.apply()
-
-                        desconectarListeners()
-                        invitado = true
-                        refAula = document.reference
-                        conectarListener()
-                    } else {
-                        Log.e(TAG, "Aula no encontrada")
-                        // Si no hemos estado conectados a otro aula, mostrar el error
-                        val preferences: SharedPreferences =
-                            getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
-                        if (preferences.getString("codigoAulaConectada", null) == null) {
-                            dialogoError()
-                        }
-                        desconectarAula()
-                    }
-                }
-            }
-    }
-
-    fun dialogoError() {
-
-        val builder = AlertDialog.Builder(this)
-
-        builder.setTitle(getString(R.string.dialogo_error_titulo))
-        builder.setMessage(getString(R.string.dialogo_error_mensaje))
-
-        builder.setPositiveButton(getString(R.string.dialogo_ok)) { _, _ ->
-            Log.e(TAG, "Error de conexión")
-        }
-
-        builder.show()
-    }
-
-    //region Funciones exclusivas de la versión Android
-    private fun animarBoton(event: MotionEvent, v: View?, nombre: String) {
-
-        if (!isRunningTest) {
-            if (event.action == MotionEvent.ACTION_DOWN) {
-                Log.d("TurnoClase", "DOWN del botón $nombre...")
-
-                // Difuminar
-                val anim = ObjectAnimator.ofFloat(v, "alpha", 1f, 0.15f)
-                anim.duration = 100
-                anim.start()
-            } else if (event.action == MotionEvent.ACTION_UP) {
-                Log.d("TurnoClase", "UP del botón $nombre...")
-
-                // Restaurar
-                val anim = ObjectAnimator.ofFloat(v, "alpha", 0.15f, 1f)
-                anim.duration = 300
-                anim.start()
-            }
         }
     }
-
-    companion object {
-
-        private val TAG = "MainActivity"
-
-    }
-
-    // Detectar si la conexión de red está activa o no
-    private var networkAvailable = true
-
-    private fun netIsOn() {
-        networkAvailable = true
-        if (uid != null) {
-            conectarAula()
-        }
-        Log.d("Reachability", "Net is ON")
-    }
-
-    private fun netIsOff() {
-        networkAvailable = false
-        actualizarAula("?", 0)
-        actualizarMensaje(getString(R.string.error_no_network))
-        binding.viewPager.currentItem = 0
-        invitado = false
-        numAulas = 0
-        aulaActual = 0
-        ocultarIndicador()
-        desconectarListeners()
-        Log.e("Reachability", "Net is OFF")
-    }
-
-    override fun onInternetConnectivityChanged(isConnected: Boolean) {
-        if (isConnected) {
-            netIsOn()
-        } else {
-            netIsOff()
-        }
-    }
-//endregion
 }

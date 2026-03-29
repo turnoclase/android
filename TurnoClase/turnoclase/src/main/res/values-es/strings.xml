@@ -19,4 +19,17 @@
     <string name="ESPERA">Espera para pedir turno...</string>
     <string name="etiqueta_error">ERROR</string>
     <string name="MENSAJE_ERROR">Verifica el número de aula\no la conexión de red</string>
+    <string name="MENSAJE_ERROR_RED">No hay conexión de red</string>
+    <string name="historico_titulo">Aulas</string>
+    <string name="historico_vacio">Sin historial</string>
+    <string name="historico_sin_etiqueta">Sin etiqueta</string>
+    <string name="historico_etiqueta_titulo">Etiqueta</string>
+    <string name="historico_etiqueta_mensaje">Introduce una etiqueta para este aula.</string>
+    <string name="historico_etiqueta_placeholder">Etiqueta</string>
+    <string name="guardar">Guardar</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="cerrar">Cerrar</string>
+    <string name="editar">Editar</string>
+    <string name="listo">Hecho</string>
+    <string name="eliminar">Eliminar</string>
 </resources>
