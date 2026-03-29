@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,10 +15,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -187,15 +186,14 @@ fun PantallaInicialScreen(vm: ConexionViewModel) {
             val (bx150, by150) = posEnBorde(150.0, centroXPx, centroYPx, radioPx)
             val botonMitad = (tamanyoBotonPx / 2).roundToInt()
             BotonCircularIcono(
-                icono = Icons.AutoMirrored.Filled.ArrowForward,
+                painter = painterResource(R.drawable.boton_siguiente),
                 colorFondo = Azul,
                 colorIcono = Color.White,
                 tamanyo = tamanyoBotonDp,
-                tamanyoIcono = 28.dp,
+                tamanyoIcono = 72.dp,
                 enabled = vm.puedeConectar,
                 modifier = Modifier
-                    .absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) }
-                    .graphicsLayer { this.alpha = if (vm.puedeConectar) 1f else 0.4f },
+                    .absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) },
                 onClick = { focusManager.clearFocus(); vm.conectar() }
             )
         }

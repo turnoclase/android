@@ -4,9 +4,6 @@ package com.jaureguialzo.turnoclase.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,8 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -108,8 +107,8 @@ fun TurnoScreen(vm: ConexionViewModel) {
             // Botón cancelar (rojo, -60°)
             val (bxN60, byN60) = posEnBorde(-60.0, centroXPx, centroYPx, radioPx)
             BotonCircularIcono(
-                icono = Icons.Default.Close,
-                colorFondo = Rojo, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 30.dp,
+                painter = painterResource(R.drawable.boton_cancelar),
+                colorFondo = Rojo, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
                 modifier = Modifier.absoluteOffset { IntOffset(bxN60 - botonMitad, byN60 - botonMitad) },
                 onClick = { vm.cancelar() }
             )
@@ -125,14 +124,14 @@ fun TurnoScreen(vm: ConexionViewModel) {
                     onClick = {}
                 )
                 vm.errorRed -> BotonCircularIcono(
-                    icono = Icons.Default.Refresh,
-                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp,
+                    painter = painterResource(R.drawable.boton_actualizar),
+                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
                     modifier = Modifier.absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) },
                     onClick = { vm.reintentar() }
                 )
                 else -> BotonCircularIcono(
-                    icono = Icons.Default.Refresh,
-                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp,
+                    painter = painterResource(R.drawable.boton_actualizar),
+                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
                     enabled = vm.mostrarBotonActualizar,
                     modifier = Modifier
                         .absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) }

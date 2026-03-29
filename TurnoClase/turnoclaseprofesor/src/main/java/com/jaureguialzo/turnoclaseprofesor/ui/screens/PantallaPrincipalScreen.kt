@@ -5,9 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -130,15 +128,15 @@ fun PantallaPrincipalScreen(
             val (bx150, by150) = posEnBorde(150.0, centroXPx, centroYPx, radioPx)
             if (vm.errorRed) {
                 BotonCircularIcono(
-                    icono = Icons.Default.Refresh,
-                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp,
+                    painter = painterResource(R.drawable.boton_actualizar),
+                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
                     modifier = Modifier.absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) },
                     onClick = { vm.feedbackTactilLigero(); vm.reintentar() }
                 )
             } else {
                 BotonCircularIcono(
-                    icono = Icons.AutoMirrored.Filled.ArrowForward,
-                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 28.dp,
+                    painter = painterResource(R.drawable.boton_siguiente),
+                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
                     modifier = Modifier.absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) },
                     onClick = { vm.feedbackTactilLigero(); vm.mostrarSiguiente(avanzarCola = true) }
                 )

@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -99,7 +99,7 @@ fun BotonCircular(
 
 @Composable
 fun BotonCircularIcono(
-    icono: ImageVector,
+    painter: Painter,
     colorFondo: Color,
     colorIcono: Color,
     tamanyo: Dp,
@@ -145,7 +145,7 @@ fun BotonCircularIcono(
             }
     ) {
         Icon(
-            imageVector = icono,
+            painter = painter,
             contentDescription = null,
             tint = colorIcono,
             modifier = Modifier
