@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -39,7 +40,9 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaInicialScreen(vm: ConexionViewModel) {
+fun PantallaInicialScreen(
+    vm: ConexionViewModel, colorRelleno: Color = Color.White
+) {
     val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
 
@@ -57,10 +60,13 @@ fun PantallaInicialScreen(vm: ConexionViewModel) {
                     vm.codigoAula = aula.codigo
                     mostrarHistorico = false
                 },
-                onEtiquetarActualizar = { id, etiqueta -> vm.actualizarEtiquetaHistorico(id, etiqueta) },
+                onEtiquetarActualizar = { id, etiqueta ->
+                    vm.actualizarEtiquetaHistorico(
+                        id, etiqueta
+                    )
+                },
                 onEliminar = { id -> vm.eliminarDeHistorico(id) },
-                onCerrar = { mostrarHistorico = false }
-            )
+                onCerrar = { mostrarHistorico = false })
         }
     }
 
@@ -68,8 +74,7 @@ fun PantallaInicialScreen(vm: ConexionViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .onSizeChanged { containerSize = it }
-    ) {
+            .onSizeChanged { containerSize = it }) {
         if (containerSize.width > 0) {
             val w = containerSize.width
             val h = containerSize.height
@@ -88,13 +93,11 @@ fun PantallaInicialScreen(vm: ConexionViewModel) {
                     .size(tamanyoCirculoDp)
                     .absoluteOffset {
                         IntOffset(
-                            (centroXPx - radioPx).roundToInt(),
-                            (centroYPx - radioPx).roundToInt()
+                            (centroXPx - radioPx).roundToInt(), (centroYPx - radioPx).roundToInt()
                         )
                     }
                     .clip(CircleShape)
-                    .background(Gris)
-            ) {
+                    .background(Gris)) {
                 // Símbolo persona de fondo (tenue)
                 Icon(
                     painter = painterResource(R.drawable.persona),
@@ -107,43 +110,61 @@ fun PantallaInicialScreen(vm: ConexionViewModel) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
-                        .widthIn(max = tamanyoCirculoDp - 32.dp)
+                        .padding(horizontal = 20.dp)
+                        .widthIn(max = tamanyoCirculoDp - 56.dp)
                 ) {
                     Text(
                         text = stringResource(R.string.etiqueta_aula).uppercase(),
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         letterSpacing = 1.sp,
                         color = Color.Black
                     )
-                    Spacer(Modifier.height(4.dp))
 
                     Box {
-                        OutlinedTextField(
+                        BasicTextField(
                             value = vm.codigoAula,
                             onValueChange = { vm.codigoAula = it.uppercase().take(5) },
-                            placeholder = {
-                                Text("BE131", color = Color.Gray.copy(0.8f),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Center)
-                            },
                             singleLine = true,
-                            textStyle = LocalTextStyle.current.copy(fontSize = 20.sp, textAlign = TextAlign.Center),
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = 20.sp, textAlign = TextAlign.Center, color = Color.Black
+                            ),
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Characters,
                                 keyboardType = KeyboardType.Ascii,
                                 imeAction = ImeAction.Done
                             ),
                             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                            shape = RoundedCornerShape(50),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color.White, unfocusedContainerColor = Color.White),
-                            modifier = Modifier.height(50.dp).fillMaxWidth()
-                        )
+                            modifier = Modifier
+                                .height(36.dp)
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(50))
+                                .background(colorRelleno),
+                            decorationBox = { innerTextField ->
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 12.dp)
+                                ) {
+                                    if (vm.codigoAula.isEmpty()) {
+                                        Text(
+                                            "BE131",
+                                            color = Color.Gray.copy(0.8f),
+                                            modifier = Modifier.fillMaxWidth(),
+                                            textAlign = TextAlign.Center,
+                                            fontSize = 20.sp
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            })
                         if (vm.historicoAulas.isNotEmpty()) {
                             IconButton(
                                 onClick = { focusManager.clearFocus(); mostrarHistorico = true },
-                                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp).size(36.dp)
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .padding(end = 4.dp)
+                                    .size(36.dp)
                             ) {
                                 Icon(Icons.Default.FilterList, null, tint = Color.Gray.copy(0.7f))
                             }
@@ -154,32 +175,49 @@ fun PantallaInicialScreen(vm: ConexionViewModel) {
 
                     Text(
                         text = stringResource(R.string.etiqueta_nombre_usuario).uppercase(),
-                        fontSize = 14.sp, letterSpacing = 1.sp, color = Color.Black
+                        fontSize = 16.sp,
+                        letterSpacing = 1.sp,
+                        color = Color.Black
                     )
-                    Spacer(Modifier.height(4.dp))
 
-                    OutlinedTextField(
+                    BasicTextField(
                         value = vm.nombreUsuario,
                         onValueChange = { vm.nombreUsuario = it.take(15) },
-                        placeholder = {
-                            Text(vm.placeholder, color = Color.Gray.copy(0.8f),
-                                modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                        },
                         singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontSize = 20.sp, textAlign = TextAlign.Center),
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 20.sp, textAlign = TextAlign.Center, color = Color.Black
+                        ),
                         keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Words,
-                            imeAction = ImeAction.Go
+                            capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Go
                         ),
                         keyboardActions = KeyboardActions(onGo = {
                             focusManager.clearFocus()
                             if (vm.puedeConectar) vm.conectar()
                         }),
-                        shape = RoundedCornerShape(50),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White, unfocusedContainerColor = Color.White),
-                        modifier = Modifier.height(50.dp).fillMaxWidth()
-                    )
+                        modifier = Modifier
+                            .height(36.dp)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(50))
+                            .background(colorRelleno),
+                        decorationBox = { innerTextField ->
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 12.dp)
+                            ) {
+                                if (vm.nombreUsuario.isEmpty()) {
+                                    Text(
+                                        vm.placeholder,
+                                        color = Color.Gray.copy(0.8f),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 20.sp
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        })
                 }
             }
 
@@ -193,10 +231,13 @@ fun PantallaInicialScreen(vm: ConexionViewModel) {
                 tamanyo = tamanyoBotonDp,
                 tamanyoIcono = 72.dp,
                 enabled = vm.puedeConectar,
-                modifier = Modifier
-                    .absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) },
-                onClick = { focusManager.clearFocus(); vm.conectar() }
-            )
+                modifier = Modifier.absoluteOffset {
+                    IntOffset(
+                        bx150 - botonMitad,
+                        by150 - botonMitad
+                    )
+                },
+                onClick = { focusManager.clearFocus(); vm.conectar() })
         }
     }
 }
