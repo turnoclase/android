@@ -473,7 +473,8 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
 
     private fun tiempoEsperaRestante(): Int {
         val ultima = ultimaPeticion ?: return -1
-        return segundosEspera - ((Date().time - ultima.time) / 1000).toInt()
+        val elapsedSeconds = maxOf(0L, (Date().time - ultima.time) / 1000)
+        return (segundosEspera - elapsedSeconds).toInt()
     }
 
     private fun tickCronometro() {
