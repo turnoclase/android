@@ -16,6 +16,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -101,8 +102,13 @@ fun PantallaPrincipalScreen(
                         )
                         else -> Text(
                             text = vm.nombreAlumno,
-                            fontSize = 51.sp, textAlign = TextAlign.Center, color = Color.Black,
+                            textAlign = TextAlign.Center,
+                            color = Color.Black,
                             maxLines = 1,
+                            autoSize = TextAutoSize.StepBased(
+                                minFontSize = 14.sp,
+                                maxFontSize = 51.sp
+                            ),
                             modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
                         )
                     }
