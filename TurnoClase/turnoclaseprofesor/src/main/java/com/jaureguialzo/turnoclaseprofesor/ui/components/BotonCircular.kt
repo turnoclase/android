@@ -47,7 +47,16 @@ fun BotonCircular(
     onClick: () -> Unit
 ) {
     var pulsado by remember { mutableStateOf(false) }
-    val alpha by animateFloatAsState(
+
+    // El círculo se opaca solo cuando el botón está desactivado
+    val alphaCirculo by animateFloatAsState(
+        targetValue = if (enabled) 1.0f else 0.4f,
+        animationSpec = tween(200),
+        label = "circulo_alpha"
+    )
+
+    // Solo el contenido interior se desvanece al pulsar
+    val alphaContenido by animateFloatAsState(
         targetValue = if (pulsado) 0.15f else 1.0f,
         animationSpec = tween(if (pulsado) 100 else 300),
         label = "boton_alpha"
@@ -57,7 +66,7 @@ fun BotonCircular(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(tamanyo)
-            .graphicsLayer { this.alpha = alpha }
+            .graphicsLayer { this.alpha = alphaCirculo }
             .clip(CircleShape)
             .background(colorFondo)
             .pointerInput(enabled) {
@@ -81,7 +90,9 @@ fun BotonCircular(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             fontFamily = if (monoespacio) FontFamily.Monospace else null,
-            modifier = Modifier.padding(horizontal = 6.dp)
+            modifier = Modifier
+                .padding(horizontal = 6.dp)
+                .graphicsLayer { this.alpha = alphaContenido }
         )
     }
 }
@@ -98,7 +109,16 @@ fun BotonCircularIcono(
     onClick: () -> Unit
 ) {
     var pulsado by remember { mutableStateOf(false) }
-    val alpha by animateFloatAsState(
+
+    // El círculo se opaca solo cuando el botón está desactivado
+    val alphaCirculo by animateFloatAsState(
+        targetValue = if (enabled) 1.0f else 0.4f,
+        animationSpec = tween(200),
+        label = "circulo_alpha"
+    )
+
+    // Solo el icono interior se desvanece al pulsar
+    val alphaContenido by animateFloatAsState(
         targetValue = if (pulsado) 0.15f else 1.0f,
         animationSpec = tween(if (pulsado) 100 else 300),
         label = "icono_alpha"
@@ -108,7 +128,7 @@ fun BotonCircularIcono(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(tamanyo)
-            .graphicsLayer { this.alpha = alpha }
+            .graphicsLayer { this.alpha = alphaCirculo }
             .clip(CircleShape)
             .background(colorFondo)
             .pointerInput(enabled) {
@@ -128,7 +148,9 @@ fun BotonCircularIcono(
             imageVector = icono,
             contentDescription = null,
             tint = colorIcono,
-            modifier = Modifier.size(tamanyoIcono)
+            modifier = Modifier
+                .size(tamanyoIcono)
+                .graphicsLayer { this.alpha = alphaContenido }
         )
     }
 }
