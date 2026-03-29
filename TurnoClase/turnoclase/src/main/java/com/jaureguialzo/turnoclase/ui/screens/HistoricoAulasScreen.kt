@@ -82,7 +82,10 @@ fun HistoricoAulasScreen(
                 title = { Text(stringResource(R.string.historico_titulo)) },
                 navigationIcon = {
                     IconButton(onClick = onCerrar) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cerrar))
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.cerrar)
+                        )
                     }
                 }
             )
@@ -199,7 +202,7 @@ private fun FilaAulaHistorico(
                 Text(text = aula.etiqueta, style = MaterialTheme.typography.bodyMedium)
             } else {
                 Text(
-                    text = "— " + aula.codigo,
+                    text = stringResource(R.string.historico_sin_etiqueta),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontStyle = FontStyle.Italic
