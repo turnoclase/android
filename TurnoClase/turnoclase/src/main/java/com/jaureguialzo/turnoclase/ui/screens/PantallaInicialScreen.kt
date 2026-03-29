@@ -96,10 +96,11 @@ fun PantallaInicialScreen(vm: ConexionViewModel) {
                     .background(Gris)
             ) {
                 // Símbolo persona de fondo (tenue)
-                Text(
-                    text = "👤",
-                    fontSize = (tamanyoCirculoDp.value * 0.38f).sp,
-                    color = Color.Black.copy(alpha = 0.025f)
+                Icon(
+                    painter = painterResource(R.drawable.persona),
+                    contentDescription = null,
+                    tint = Color.Black.copy(alpha = 0.025f),
+                    modifier = Modifier.size(tamanyoCirculoDp * 0.60f)
                 )
 
                 // Campos de texto en el centro
