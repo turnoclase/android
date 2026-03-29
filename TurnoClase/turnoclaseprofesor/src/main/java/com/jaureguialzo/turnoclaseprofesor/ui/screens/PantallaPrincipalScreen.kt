@@ -152,7 +152,7 @@ fun PantallaPrincipalScreen(
                     .absoluteOffset {
                         IntOffset(
                             (centroXPx - with(density) { 120.dp.toPx() }).roundToInt(),
-                            (centroYPx + radioPx + with(density) { 16.dp.toPx() }).roundToInt()
+                            (centroYPx + radioPx + with(density) { 28.dp.toPx() }).roundToInt()
                         )
                     }
                     .width(240.dp)
