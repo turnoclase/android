@@ -3,10 +3,27 @@ package com.jaureguialzo.turnoclaseprofesor.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,14 +33,16 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jaureguialzo.turnoclaseprofesor.R
-import com.jaureguialzo.turnoclaseprofesor.ui.components.*
+import com.jaureguialzo.turnoclaseprofesor.ui.components.AnimacionPuntos
+import com.jaureguialzo.turnoclaseprofesor.ui.components.BotonCircular
+import com.jaureguialzo.turnoclaseprofesor.ui.components.BotonCircularIcono
+import com.jaureguialzo.turnoclaseprofesor.ui.components.posEnBorde
 import com.jaureguialzo.turnoclaseprofesor.ui.theme.Amarillo
 import com.jaureguialzo.turnoclaseprofesor.ui.theme.Azul
 import com.jaureguialzo.turnoclaseprofesor.ui.theme.Gris
@@ -79,8 +98,11 @@ fun PantallaPrincipalScreen(
                             onDragCancel = { swipeAcumulado = 0f }
                         ) { _, dragAmount ->
                             swipeAcumulado += dragAmount
-                            if (swipeAcumulado < -80f) { swipeAcumulado = 0f; vm.aulaSiguiente() }
-                            else if (swipeAcumulado > 80f) { swipeAcumulado = 0f; vm.aulaAnterior() }
+                            if (swipeAcumulado < -80f) {
+                                swipeAcumulado = 0f; vm.aulaSiguiente()
+                            } else if (swipeAcumulado > 80f) {
+                                swipeAcumulado = 0f; vm.aulaAnterior()
+                            }
                         }
                     }
             ) {
@@ -91,8 +113,10 @@ fun PantallaPrincipalScreen(
                     modifier = Modifier.size(tamanyoCirculoDp * 0.60f)
                 )
 
-                Box(contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(tamanyoCirculoDp - 32.dp)) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(tamanyoCirculoDp - 32.dp)
+                ) {
                     when {
                         vm.cargando -> AnimacionPuntos(color = Color.Black, tamanyo = 10.dp)
                         vm.errorRed -> Text(
@@ -100,6 +124,7 @@ fun PantallaPrincipalScreen(
                             fontSize = 22.sp, textAlign = TextAlign.Center, color = Color.Black,
                             modifier = Modifier.padding(horizontal = 20.dp)
                         )
+
                         else -> Text(
                             text = vm.nombreAlumno,
                             textAlign = TextAlign.Center,
@@ -109,7 +134,9 @@ fun PantallaPrincipalScreen(
                                 minFontSize = 14.sp,
                                 maxFontSize = 51.sp
                             ),
-                            modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
                         )
                     }
                 }
@@ -120,7 +147,12 @@ fun PantallaPrincipalScreen(
             BotonCircular(
                 titulo = vm.codigoAula,
                 colorFondo = Gris, colorTexto = Color.Black, tamanyo = tamanyoBotonDp,
-                modifier = Modifier.absoluteOffset { IntOffset(bxN60 - botonMitad, byN60 - botonMitad) },
+                modifier = Modifier.absoluteOffset {
+                    IntOffset(
+                        bxN60 - botonMitad,
+                        byN60 - botonMitad
+                    )
+                },
                 onClick = { vm.feedbackTactilLigero(); onMostrarMenu() }
             )
 
@@ -129,7 +161,12 @@ fun PantallaPrincipalScreen(
             BotonCircular(
                 titulo = "${vm.enCola}",
                 colorFondo = Rojo, colorTexto = Color.White, tamanyo = tamanyoBotonDp,
-                modifier = Modifier.absoluteOffset { IntOffset(bx30 - botonMitad, by30 - botonMitad) },
+                modifier = Modifier.absoluteOffset {
+                    IntOffset(
+                        bx30 - botonMitad,
+                        by30 - botonMitad
+                    )
+                },
                 onClick = { vm.feedbackTactilLigero(); onMostrarCola() }
             )
 
@@ -138,15 +175,31 @@ fun PantallaPrincipalScreen(
             if (vm.errorRed) {
                 BotonCircularIcono(
                     painter = painterResource(R.drawable.boton_actualizar),
-                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
-                    modifier = Modifier.absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) },
+                    colorFondo = Azul,
+                    colorIcono = Color.White,
+                    tamanyo = tamanyoBotonDp,
+                    tamanyoIcono = 72.dp,
+                    modifier = Modifier.absoluteOffset {
+                        IntOffset(
+                            bx150 - botonMitad,
+                            by150 - botonMitad
+                        )
+                    },
                     onClick = { vm.feedbackTactilLigero(); vm.reintentar() }
                 )
             } else {
                 BotonCircularIcono(
                     painter = painterResource(R.drawable.boton_siguiente),
-                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
-                    modifier = Modifier.absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) },
+                    colorFondo = Azul,
+                    colorIcono = Color.White,
+                    tamanyo = tamanyoBotonDp,
+                    tamanyoIcono = 72.dp,
+                    modifier = Modifier.absoluteOffset {
+                        IntOffset(
+                            bx150 - botonMitad,
+                            by150 - botonMitad
+                        )
+                    },
                     onClick = { vm.feedbackTactilLigero(); vm.mostrarSiguiente(avanzarCola = true) }
                 )
             }
@@ -166,9 +219,12 @@ fun PantallaPrincipalScreen(
             ) {
                 when {
                     vm.mostrarIndicador -> CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        modifier = Modifier.size(20.dp), strokeWidth = 2.dp
+                    )
+
                     vm.numAulas > 1 && !vm.invitado -> PageControl(
-                        currentPage = vm.aulaActual, totalPages = vm.numAulas)
+                        currentPage = vm.aulaActual, totalPages = vm.numAulas
+                    )
                 }
             }
         }
@@ -183,9 +239,12 @@ fun PageControl(currentPage: Int, totalPages: Int) {
     ) {
         repeat(totalPages) { i ->
             Box(
-                modifier = Modifier.size(7.dp).clip(CircleShape).background(
-                    if (i == currentPage) Color.Gray.copy(0.6f) else Color.Gray.copy(0.25f)
-                )
+                modifier = Modifier
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (i == currentPage) Color.Gray.copy(0.6f) else Color.Gray.copy(0.25f)
+                    )
             )
         }
     }

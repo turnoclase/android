@@ -2,16 +2,24 @@
 package com.jaureguialzo.turnoclase.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -22,7 +30,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jaureguialzo.turnoclase.R
-import com.jaureguialzo.turnoclase.ui.components.*
+import com.jaureguialzo.turnoclase.ui.components.AnimacionPuntos
+import com.jaureguialzo.turnoclase.ui.components.BotonCircular
+import com.jaureguialzo.turnoclase.ui.components.BotonCircularIcono
+import com.jaureguialzo.turnoclase.ui.components.posEnBorde
 import com.jaureguialzo.turnoclase.ui.theme.Amarillo
 import com.jaureguialzo.turnoclase.ui.theme.Azul
 import com.jaureguialzo.turnoclase.ui.theme.Gris
@@ -76,7 +87,8 @@ fun TurnoScreen(vm: ConexionViewModel) {
                     modifier = Modifier.size(tamanyoCirculoDp * 0.60f)
                 )
 
-                Box(contentAlignment = Alignment.Center,
+                Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier.size(tamanyoCirculoDp - 32.dp)
                 ) {
                     when {
@@ -86,6 +98,7 @@ fun TurnoScreen(vm: ConexionViewModel) {
                             fontSize = 22.sp, textAlign = TextAlign.Center, color = Color.Black,
                             modifier = Modifier.padding(horizontal = 20.dp)
                         )
+
                         else -> Text(
                             text = mensajeEstado(vm),
                             fontSize = mensajeFontSize(vm).sp,
@@ -103,7 +116,12 @@ fun TurnoScreen(vm: ConexionViewModel) {
             BotonCircular(
                 titulo = vm.codigoAulaActual,
                 colorFondo = Amarillo, colorTexto = Color.Black, tamanyo = tamanyoBotonDp,
-                modifier = Modifier.absoluteOffset { IntOffset(bx30 - botonMitad, by30 - botonMitad) },
+                modifier = Modifier.absoluteOffset {
+                    IntOffset(
+                        bx30 - botonMitad,
+                        by30 - botonMitad
+                    )
+                },
                 onClick = {}
             )
 
@@ -111,8 +129,16 @@ fun TurnoScreen(vm: ConexionViewModel) {
             val (bxN60, byN60) = posEnBorde(-60.0, centroXPx, centroYPx, radioPx)
             BotonCircularIcono(
                 painter = painterResource(R.drawable.boton_cancelar),
-                colorFondo = Rojo, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
-                modifier = Modifier.absoluteOffset { IntOffset(bxN60 - botonMitad, byN60 - botonMitad) },
+                colorFondo = Rojo,
+                colorIcono = Color.White,
+                tamanyo = tamanyoBotonDp,
+                tamanyoIcono = 72.dp,
+                modifier = Modifier.absoluteOffset {
+                    IntOffset(
+                        bxN60 - botonMitad,
+                        byN60 - botonMitad
+                    )
+                },
                 onClick = { vm.cancelar() }
             )
 
@@ -123,18 +149,36 @@ fun TurnoScreen(vm: ConexionViewModel) {
                     titulo = "%02d:%02d".format(vm.minutosRestantes, vm.segundosRestantes),
                     colorFondo = Azul, colorTexto = Color.White, tamanyo = tamanyoBotonDp,
                     fontSize = 15.sp, monoespacio = true,
-                    modifier = Modifier.absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) },
+                    modifier = Modifier.absoluteOffset {
+                        IntOffset(
+                            bx150 - botonMitad,
+                            by150 - botonMitad
+                        )
+                    },
                     onClick = {}
                 )
+
                 vm.errorRed -> BotonCircularIcono(
                     painter = painterResource(R.drawable.boton_actualizar),
-                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
-                    modifier = Modifier.absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) },
+                    colorFondo = Azul,
+                    colorIcono = Color.White,
+                    tamanyo = tamanyoBotonDp,
+                    tamanyoIcono = 72.dp,
+                    modifier = Modifier.absoluteOffset {
+                        IntOffset(
+                            bx150 - botonMitad,
+                            by150 - botonMitad
+                        )
+                    },
                     onClick = { vm.reintentar() }
                 )
+
                 else -> BotonCircularIcono(
                     painter = painterResource(R.drawable.boton_actualizar),
-                    colorFondo = Azul, colorIcono = Color.White, tamanyo = tamanyoBotonDp, tamanyoIcono = 72.dp,
+                    colorFondo = Azul,
+                    colorIcono = Color.White,
+                    tamanyo = tamanyoBotonDp,
+                    tamanyoIcono = 72.dp,
                     enabled = vm.mostrarBotonActualizar,
                     modifier = Modifier
                         .absoluteOffset { IntOffset(bx150 - botonMitad, by150 - botonMitad) }

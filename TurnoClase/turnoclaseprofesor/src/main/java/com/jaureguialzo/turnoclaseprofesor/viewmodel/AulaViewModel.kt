@@ -12,18 +12,30 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.*
+import com.google.firebase.firestore.BuildConfig
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Source
 import com.google.firebase.functions.FirebaseFunctions
-import com.jaureguialzo.turnoclaseprofesor.BuildConfig
-import com.jaureguialzo.turnoclaseprofesor.Nombres
 import com.jaureguialzo.turnoclaseprofesor.model.AlumnoCola
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import java.util.Random
 
 class AulaViewModel(application: Application) : AndroidViewModel(application) {
@@ -85,6 +97,7 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                 Log.d(TAG, "Red disponible")
             }
         }
+
         override fun onLost(network: Network) {
             viewModelScope.launch(Dispatchers.Main) {
                 terminarCarga()
@@ -138,7 +151,8 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                                 prefs.edit().putString("uidAnterior", uid).apply()
                             }
 
-                            val codigoAulaConectada = prefs.getString("codigoAulaConectada", "") ?: ""
+                            val codigoAulaConectada =
+                                prefs.getString("codigoAulaConectada", "") ?: ""
                             val pinConectada = prefs.getString("pinConectada", "") ?: ""
 
                             if (codigoAulaConectada.isNotEmpty() && pinConectada.isNotEmpty()) {
@@ -227,7 +241,9 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun crearNuevaAula(): DocumentReference? {
-        val result = functions.getHttpsCallable("nuevoCodigo").call(mapOf("keepalive" to false)).await()
+        val result =
+            functions.getHttpsCallable("nuevoCodigo").call(mapOf("keepalive" to false)).await()
+
         @Suppress("UNCHECKED_CAST")
         val codigo = (result.data as? Map<String, Any>)?.get("codigo") as? String ?: return null
         Log.d(TAG, "Nuevo código de aula: $codigo")
@@ -271,26 +287,27 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                     mostrarIndicador = false
 
                     if (listenerCola == null) {
-                        listenerCola = refAula!!.collection("cola").addSnapshotListener { querySnapshot, colaError ->
-                            viewModelScope.launch(Dispatchers.Main) {
-                                if (colaError != null) {
-                                    Log.e(TAG, "Error al recuperar datos: ${colaError.message}")
-                                    terminarCarga()
-                                    errorRed = true
-                                } else if (querySnapshot != null) {
-                                    errorRed = false
-                                    val docs = querySnapshot.documents.sortedBy {
-                                        (it.data?.get("timestamp") as? Timestamp)?.seconds ?: 0
-                                    }
-                                    actualizarContador(docs.size)
-                                    actualizarListaAlumnosEnCola(docs)
-                                    if (!avanzandoCola) {
-                                        mostrarSiguienteDesdeSnapshot(docs)
-                                        feedbackTactilNotificacion()
+                        listenerCola = refAula!!.collection("cola")
+                            .addSnapshotListener { querySnapshot, colaError ->
+                                viewModelScope.launch(Dispatchers.Main) {
+                                    if (colaError != null) {
+                                        Log.e(TAG, "Error al recuperar datos: ${colaError.message}")
+                                        terminarCarga()
+                                        errorRed = true
+                                    } else if (querySnapshot != null) {
+                                        errorRed = false
+                                        val docs = querySnapshot.documents.sortedBy {
+                                            (it.data?.get("timestamp") as? Timestamp)?.seconds ?: 0
+                                        }
+                                        actualizarContador(docs.size)
+                                        actualizarListaAlumnosEnCola(docs)
+                                        if (!avanzandoCola) {
+                                            mostrarSiguienteDesdeSnapshot(docs)
+                                            feedbackTactilNotificacion()
+                                        }
                                     }
                                 }
                             }
-                        }
                     }
                 } else {
                     Log.d(TAG, "El aula ha desaparecido")
@@ -352,7 +369,14 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                 } catch (e: Exception) {
                     Log.e(TAG, "Error al obtener nombre de alumno: ${e.message}")
                 }
-                lista.add(AlumnoCola(id = doc.id, alumnoId = alumnoId, nombre = nombre, timestampMs = ts))
+                lista.add(
+                    AlumnoCola(
+                        id = doc.id,
+                        alumnoId = alumnoId,
+                        nombre = nombre,
+                        timestampMs = ts
+                    )
+                )
             }
             alumnosEnCola = lista
         }
@@ -397,7 +421,8 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                     return@launch
                 }
 
-                val alumnoDoc = db.collection("alumnos").document(alumnoId).get(Source.SERVER).await()
+                val alumnoDoc =
+                    db.collection("alumnos").document(alumnoId).get(Source.SERVER).await()
                 if (alumnoDoc.exists()) {
                     if (avanzarCola) {
                         refAulaLocal.collection("espera").document(alumnoId)
@@ -408,8 +433,11 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                         if (docs.size > 1) {
                             val siguienteId = docs[1].data?.get("alumno") as? String
                             if (siguienteId != null) {
-                                val sigDoc = db.collection("alumnos").document(siguienteId).get(Source.SERVER).await()
-                                nombreAlumno = if (sigDoc.exists()) sigDoc.data?.get("nombre") as? String ?: "?" else ""
+                                val sigDoc = db.collection("alumnos").document(siguienteId)
+                                    .get(Source.SERVER).await()
+                                nombreAlumno =
+                                    if (sigDoc.exists()) sigDoc.data?.get("nombre") as? String
+                                        ?: "?" else ""
                             } else {
                                 nombreAlumno = ""
                             }
@@ -645,7 +673,12 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
             @Suppress("DEPRECATION")
             val vibrator = getApplication<Application>().getSystemService(Vibrator::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator?.hasVibrator() == true) {
-                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+                vibrator.vibrate(
+                    VibrationEffect.createOneShot(
+                        50,
+                        VibrationEffect.DEFAULT_AMPLITUDE
+                    )
+                )
             }
         } catch (_: Exception) {
             // Ignorar si no hay vibrador

@@ -24,7 +24,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaureguialzo.turnoclaseprofesor.ui.components.ListaColaAlumnos
 import com.jaureguialzo.turnoclaseprofesor.ui.components.MenuAccionesAula
@@ -72,7 +76,9 @@ class MainActivity : ComponentActivity() {
                         title = { androidx.compose.material3.Text(getString(R.string.dialogo_error_titulo)) },
                         text = { androidx.compose.material3.Text(getString(R.string.dialogo_error_mensaje)) },
                         confirmButton = {
-                            androidx.compose.material3.TextButton(onClick = { vm.mostrarAlertaErrorConexion = false }) {
+                            androidx.compose.material3.TextButton(onClick = {
+                                vm.mostrarAlertaErrorConexion = false
+                            }) {
                                 androidx.compose.material3.Text(getString(R.string.dialogo_ok))
                             }
                         }
@@ -94,7 +100,9 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         dismissButton = {
-                            androidx.compose.material3.TextButton(onClick = { mostrarDialogoBorrar = false }) {
+                            androidx.compose.material3.TextButton(onClick = {
+                                mostrarDialogoBorrar = false
+                            }) {
                                 androidx.compose.material3.Text(getString(R.string.dialogo_cancelar))
                             }
                         }

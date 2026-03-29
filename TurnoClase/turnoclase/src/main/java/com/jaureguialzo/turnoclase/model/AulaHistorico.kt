@@ -57,7 +57,11 @@ object AulaHistoricoRepo {
         return lista.toList()
     }
 
-    fun actualizarEtiqueta(id: String, etiqueta: String, prefs: SharedPreferences): List<AulaHistorico> {
+    fun actualizarEtiqueta(
+        id: String,
+        etiqueta: String,
+        prefs: SharedPreferences
+    ): List<AulaHistorico> {
         val lista = cargar(prefs).toMutableList()
         val idx = lista.indexOfFirst { it.id == id }
         if (idx >= 0) {
