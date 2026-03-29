@@ -31,7 +31,7 @@ tasks.register('clean', Delete) {
 
 // REF: Parámetros compartidos: https://stackoverflow.com/a/20436423/5136913
 ext {
-    compileSdkVersion = 35
+    compileSdkVersion = 36
     minSdkVersion = 23
-    targetSdkVersion = 35
+    targetSdkVersion = 36
 }
