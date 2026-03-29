@@ -212,9 +212,13 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
 
     fun anyadirAula() {
         mostrarIndicador = true
+        desconectarListeners()
         viewModelScope.launch {
             try {
-                crearNuevaAula()
+                val ref = crearNuevaAula()
+                refAula = ref
+                aulaActual = numAulas - 1
+                conectarListener()
             } catch (e: Exception) {
                 Log.e(TAG, "Error al crear el aula: ${e.message}")
                 mostrarIndicador = false
