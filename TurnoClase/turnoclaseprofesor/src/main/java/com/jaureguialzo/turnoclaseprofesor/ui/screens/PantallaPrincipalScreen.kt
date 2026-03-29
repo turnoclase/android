@@ -122,7 +122,7 @@ fun PantallaPrincipalScreen(
             val (bx30, by30) = posEnBorde(30.0, centroXPx, centroYPx, radioPx)
             BotonCircular(
                 titulo = "${vm.enCola}",
-                colorFondo = Rojo, colorTexto = Color.White, tamanyo = tamanyoBotonDp, fontSize = 28.sp,
+                colorFondo = Rojo, colorTexto = Color.White, tamanyo = tamanyoBotonDp,
                 modifier = Modifier.absoluteOffset { IntOffset(bx30 - botonMitad, by30 - botonMitad) },
                 onClick = { vm.feedbackTactilLigero(); onMostrarCola() }
             )
