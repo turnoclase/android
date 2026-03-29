@@ -33,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -138,14 +139,12 @@ fun HistoricoAulasScreen(
                     .padding(paddingValues)
             ) {
                 itemsIndexed(historico, key = { _, a -> a.id }) { _, aula ->
-                    val dismissState = rememberSwipeToDismissBoxState(
-                        confirmValueChange = {
-                            if (it == SwipeToDismissBoxValue.EndToStart) {
-                                onEliminar(aula.id)
-                                true
-                            } else false
+                    val dismissState = rememberSwipeToDismissBoxState()
+                    LaunchedEffect(dismissState.currentValue) {
+                        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                            onEliminar(aula.id)
                         }
-                    )
+                    }
                     SwipeToDismissBox(
                         state = dismissState,
                         backgroundContent = {

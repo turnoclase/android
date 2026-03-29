@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -107,14 +108,12 @@ fun ListaColaAlumnos(
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     itemsIndexed(vm.alumnosEnCola, key = { _, a -> a.id }) { index, alumno ->
-                        val dismissState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = {
-                                if (it == SwipeToDismissBoxValue.EndToStart) {
-                                    vm.eliminarAlumnoDeCola(alumno)
-                                    true
-                                } else false
+                        val dismissState = rememberSwipeToDismissBoxState()
+                        LaunchedEffect(dismissState.currentValue) {
+                            if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                                vm.eliminarAlumnoDeCola(alumno)
                             }
-                        )
+                        }
                         SwipeToDismissBox(
                             state = dismissState,
                             backgroundContent = {
