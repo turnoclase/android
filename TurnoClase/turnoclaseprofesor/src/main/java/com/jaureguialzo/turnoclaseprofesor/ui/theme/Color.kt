@@ -3,8 +3,8 @@ package com.jaureguialzo.turnoclaseprofesor.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Azul     = Color(0xFF007AFF)
-val Rojo     = Color(0xFFFF3B30)
-val Amarillo = Color(0xFFFFCC00)
-val Gris     = Color(0xFFE5E5EA)
+val Azul = Color(0xFF1076B9)
+val Rojo = Color(0xFFEC4338)
+val Amarillo = Color(0xFFFEC52E)
+val Gris = Color(0xFFDFE2E6)
 
