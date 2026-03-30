@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import com.jaureguialzo.turnoclase.R
 import com.jaureguialzo.turnoclase.model.AulaHistorico
 import com.jaureguialzo.turnoclase.ui.theme.Gris
+import com.jaureguialzo.turnoclase.ui.theme.Rojo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,14 +152,14 @@ fun HistoricoAulasScreen(
                             Box(
                                 Modifier
                                     .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.error)
+                                    .background(MaterialTheme.colorScheme.background)
                                     .padding(end = 20.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = stringResource(R.string.eliminar),
-                                    tint = Color.White
+                                    tint = Rojo
                                 )
                             }
                         },

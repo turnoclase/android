@@ -43,6 +43,7 @@ import com.jaureguialzo.turnoclaseprofesor.R
 import com.jaureguialzo.turnoclaseprofesor.model.AlumnoCola
 import com.jaureguialzo.turnoclaseprofesor.ui.theme.Azul
 import com.jaureguialzo.turnoclaseprofesor.ui.theme.Gris
+import com.jaureguialzo.turnoclaseprofesor.ui.theme.Rojo
 import com.jaureguialzo.turnoclaseprofesor.viewmodel.AulaViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,14 +121,14 @@ fun ListaColaAlumnos(
                                 Box(
                                     Modifier
                                         .fillMaxSize()
-                                        .background(MaterialTheme.colorScheme.error)
+                                        .background(MaterialTheme.colorScheme.background)
                                         .padding(end = 20.dp),
                                     contentAlignment = Alignment.CenterEnd
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
                                         contentDescription = stringResource(R.string.dialogo_ok),
-                                        tint = Color.White
+                                        tint = Rojo
                                     )
                                 }
                             },
