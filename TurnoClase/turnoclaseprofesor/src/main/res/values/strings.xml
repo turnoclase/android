@@ -44,4 +44,8 @@
     <string name="dialogo_etiquetar_aula_mensaje">Insert the new label.</string>
     <string name="cola_espera_titulo">Waiting queue</string>
     <string name="cola_vacia">The queue is empty</string>
+    <string name="cola_vaciar_boton">Clear queue</string>
+    <string name="cola_vaciar_dialogo_titulo">Clear queue</string>
+    <string name="cola_vaciar_dialogo_mensaje">This action will remove all students from the waiting queue.</string>
+    <string name="cola_vaciar_confirmar">Clear</string>
 </resources>

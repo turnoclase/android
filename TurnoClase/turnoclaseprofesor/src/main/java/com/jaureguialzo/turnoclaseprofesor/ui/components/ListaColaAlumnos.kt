@@ -18,6 +18,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -27,10 +30,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +60,32 @@ fun ListaColaAlumnos(
     vm: AulaViewModel,
     onCerrar: () -> Unit
 ) {
+    var mostrarDialogoVaciar by remember { mutableStateOf(false) }
+
+    if (mostrarDialogoVaciar) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoVaciar = false },
+            title = { Text(stringResource(R.string.cola_vaciar_dialogo_titulo)) },
+            text = { Text(stringResource(R.string.cola_vaciar_dialogo_mensaje)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        vm.vaciarCola()
+                        mostrarDialogoVaciar = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Rojo)
+                ) {
+                    Text(stringResource(R.string.cola_vaciar_confirmar), color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoVaciar = false }) {
+                    Text(stringResource(R.string.dialogo_cancelar))
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -107,7 +141,7 @@ fun ListaColaAlumnos(
                     }
                 }
 
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(modifier = Modifier.weight(1f)) {
                     itemsIndexed(vm.alumnosEnCola, key = { _, a -> a.id }) { index, alumno ->
                         val dismissState = rememberSwipeToDismissBoxState()
                         LaunchedEffect(dismissState.currentValue) {
@@ -138,6 +172,19 @@ fun ListaColaAlumnos(
                         }
                         HorizontalDivider()
                     }
+                }
+
+                Button(
+                    onClick = { mostrarDialogoVaciar = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Rojo),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.cola_vaciar_boton),
+                        color = Color.White
+                    )
                 }
             }
         }

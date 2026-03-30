@@ -35,4 +35,8 @@
     <string name="dialogo_etiquetar_aula_mensaje">Sartu etiketa berria.</string>
     <string name="cola_espera_titulo">Itxarote lerroa</string>
     <string name="cola_vacia">Lerroa hutsik dago</string>
+    <string name="cola_vaciar_boton">Lerroa hustu</string>
+    <string name="cola_vaciar_dialogo_titulo">Lerroa hustu</string>
+    <string name="cola_vaciar_dialogo_mensaje">Akzio honek itxarote lerroko ikasle guztiak ezabatuko ditu.</string>
+    <string name="cola_vaciar_confirmar">Hustu</string>
 </resources>

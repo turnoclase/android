@@ -35,4 +35,8 @@
     <string name="dialogo_etiquetar_aula_mensaje">Introduce la nueva etiqueta.</string>
     <string name="cola_espera_titulo">Cola de espera</string>
     <string name="cola_vacia">La cola está vacía</string>
+    <string name="cola_vaciar_boton">Vaciar cola</string>
+    <string name="cola_vaciar_dialogo_titulo">Vaciar cola</string>
+    <string name="cola_vaciar_dialogo_mensaje">Esta acción eliminará todos los alumnos de la cola de espera.</string>
+    <string name="cola_vaciar_confirmar">Vaciar</string>
 </resources>

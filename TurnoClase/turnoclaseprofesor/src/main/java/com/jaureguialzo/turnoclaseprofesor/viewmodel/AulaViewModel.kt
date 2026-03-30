@@ -393,6 +393,20 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun vaciarCola() {
+        viewModelScope.launch {
+            try {
+                val querySnapshot = refAula?.collection("cola")?.get()?.await()
+                querySnapshot?.documents?.forEach { doc ->
+                    doc.reference.delete().await()
+                }
+                Log.d(TAG, "Cola vaciada completamente")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al vaciar la cola: ${e.message}")
+            }
+        }
+    }
+
     // MARK: - Mostrar siguiente
 
     fun mostrarSiguiente(avanzarCola: Boolean = false) {
