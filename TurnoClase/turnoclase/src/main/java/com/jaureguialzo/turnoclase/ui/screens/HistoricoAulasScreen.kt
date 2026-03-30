@@ -216,10 +216,11 @@ private fun FilaAulaHistorico(
             )
         }
 
-        // Etiqueta (tappable para editar)
+        // Etiqueta (tappable para editar, incluyendo el espacio en blanco a la derecha)
         Box(
             modifier = Modifier
                 .weight(1f)
+                .fillMaxWidth()
                 .pointerInput(Unit) { detectTapGestures { onEtiquetar() } }
         ) {
             if (aula.etiqueta.isNotEmpty()) {
