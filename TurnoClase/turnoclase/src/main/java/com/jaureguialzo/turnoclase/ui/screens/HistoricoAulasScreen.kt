@@ -210,7 +210,8 @@ private fun FilaAulaHistorico(
             Text(
                 text = aula.codigo,
                 fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
         }
 
