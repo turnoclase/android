@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,8 +38,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -65,6 +69,8 @@ fun PantallaInicialScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val nombreFocusRequester = remember { FocusRequester() }
 
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
     var mostrarHistorico by remember { mutableStateOf(false) }
@@ -93,6 +99,7 @@ fun PantallaInicialScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .imePadding()
             .background(MaterialTheme.colorScheme.background)
             .onSizeChanged { containerSize = it }) {
         if (containerSize.width > 0) {
@@ -151,9 +158,10 @@ fun PantallaInicialScreen(
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Characters,
                                 keyboardType = KeyboardType.Ascii,
-                                imeAction = ImeAction.Done
+                                imeAction = ImeAction.Next,
+                                autoCorrect = false
                             ),
-                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                            keyboardActions = KeyboardActions(onNext = { nombreFocusRequester.requestFocus() }),
                             modifier = Modifier
                                 .height(36.dp)
                                 .fillMaxWidth()
@@ -208,17 +216,20 @@ fun PantallaInicialScreen(
                             fontSize = 20.sp, textAlign = TextAlign.Center, color = Color.Black
                         ),
                         keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Go
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Go,
+                            autoCorrect = false
                         ),
                         keyboardActions = KeyboardActions(onGo = {
-                            focusManager.clearFocus()
+                            keyboardController?.hide()
                             if (vm.puedeConectar) vm.conectar()
                         }),
                         modifier = Modifier
                             .height(36.dp)
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(50))
-                            .background(colorRelleno),
+                            .background(colorRelleno)
+                            .focusRequester(nombreFocusRequester),
                         decorationBox = { innerTextField ->
                             Box(
                                 contentAlignment = Alignment.Center,
