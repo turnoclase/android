@@ -66,6 +66,8 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
     private var inicioCarga = 0L
     private var recuentoAnterior = 0
     private var avanzandoCola = false
+    private var nombreAlumnoJob: kotlinx.coroutines.Job? = null
+    private var listaAlumnosJob: kotlinx.coroutines.Job? = null
 
     private val prefs = application.getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
 
@@ -331,6 +333,7 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun mostrarSiguienteDesdeSnapshot(docs: List<DocumentSnapshot>) {
+        nombreAlumnoJob?.cancel()
         val primerDoc = docs.firstOrNull() ?: run {
             nombreAlumno = ""
             return
@@ -339,7 +342,7 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
             nombreAlumno = ""
             return
         }
-        viewModelScope.launch {
+        nombreAlumnoJob = viewModelScope.launch {
             try {
                 val alumnoDoc = db.collection("alumnos").document(alumnoId).get().await()
                 if (alumnoDoc.exists()) {
@@ -355,7 +358,8 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun actualizarListaAlumnosEnCola(docs: List<DocumentSnapshot>) {
-        viewModelScope.launch {
+        listaAlumnosJob?.cancel()
+        listaAlumnosJob = viewModelScope.launch {
             val lista = mutableListOf<AlumnoCola>()
             for (doc in docs) {
                 val alumnoId = doc.data?.get("alumno") as? String ?: continue
@@ -394,6 +398,11 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun vaciarCola() {
+        // Cancelar jobs pendientes y limpiar UI de inmediato
+        nombreAlumnoJob?.cancel()
+        listaAlumnosJob?.cancel()
+        nombreAlumno = ""
+        alumnosEnCola = listOf()
         viewModelScope.launch {
             try {
                 val querySnapshot = refAula?.collection("cola")?.get()?.await()
