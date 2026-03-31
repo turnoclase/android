@@ -406,8 +406,13 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val querySnapshot = refAula?.collection("cola")?.get()?.await()
-                querySnapshot?.documents?.forEach { doc ->
-                    doc.reference.delete().await()
+                val docs = querySnapshot?.documents
+                if (!docs.isNullOrEmpty()) {
+                    // Borrar todos en una sola operación atómica para evitar
+                    // snapshots intermedios que provoquen parpadeo en la UI
+                    val batch = db.batch()
+                    docs.forEach { doc -> batch.delete(doc.reference) }
+                    batch.commit().await()
                 }
                 Log.d(TAG, "Cola vaciada completamente")
             } catch (e: Exception) {
