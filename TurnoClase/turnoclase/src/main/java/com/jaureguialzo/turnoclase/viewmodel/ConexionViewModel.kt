@@ -28,6 +28,7 @@ import com.jaureguialzo.turnoclase.R
 import com.jaureguialzo.turnoclase.model.AulaHistorico
 import com.jaureguialzo.turnoclase.model.AulaHistoricoRepo
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

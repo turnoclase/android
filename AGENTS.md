@@ -83,6 +83,11 @@ Al completar cualquier característica o cambio, crear un commit con:
 - **Mensaje en español**, en imperativo y conciso (p.ej. `Añadir soporte para notificaciones push`).
 - Un commit por característica o cambio cohesionado; no agrupar cambios no relacionados.
 - No incluir ficheros de caché, build artifacts ni ficheros generados (`.gradle/`, `build/`, `local.properties`).
+- **Antes de hacer el commit**, verificar que el proyecto compila sin errores:
+
+  ```bash
+  cd TurnoClase && ./gradlew assembleDebug
+  ```
 
 ## Consideraciones para agentes
 
