@@ -27,6 +27,7 @@ import com.jaureguialzo.turnoclase.Nombres
 import com.jaureguialzo.turnoclase.R
 import com.jaureguialzo.turnoclase.model.AulaHistorico
 import com.jaureguialzo.turnoclase.model.AulaHistoricoRepo
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -92,6 +93,7 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
     var segundosEspera = 300 // 5 minutos por defecto
 
     private var timerJob: Job? = null
+    private var pantallaJob: Job? = null
 
     // MARK: - Inicialización
 
@@ -240,6 +242,8 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
             if (snapshot != null && !snapshot.exists()) {
                 atendido = true
                 Log.d(TAG, "Nos han borrado de la cola")
+                // Fix Bug 2: actualizar la UI inmediatamente sin esperar a listenerCola
+                viewModelScope.launch { manejarAtendido() }
             }
         }
     }
@@ -275,7 +279,9 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
             conectarListenerPosicion(docs[0].reference)
             actualizarPantalla()
 
-        } else if (pedirTurno || !atendido) {
+        } else if (pedirTurno) {
+            // Fix Bug 2: eliminar !atendido de la condición para evitar el re-encolado
+            // involuntario cuando listenerCola llega antes que listenerPosicion
             if (encolando) return
             pedirTurno = false
             encolando = true
@@ -317,29 +323,12 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
 
         } else {
             Log.d(TAG, "La cola se ha vaciado tras ser atendido")
-            viewModelScope.launch {
-                recuperarUltimaPeticion()
-                if (segundosEspera > 0 && tiempoEsperaRestante() > 0) {
-                    estadoTurno = EstadoTurno.Esperando(tiempoEsperaRestante())
-                    mostrarCronometro = true
-                    mostrarBotonActualizar = false
-                    mostrarError = false
-                    iniciarCronometro()
-                    actualizarUI()
-                } else {
-                    Log.d(TAG, "Mostrando botón para volver a pedir turno")
-                    reiniciarCronometro()
-                    borrarUltimaPeticion()
-                    estadoTurno = EstadoTurno.VolverAEmpezar
-                    mostrarCronometro = false
-                    mostrarBotonActualizar = true
-                    mostrarError = false
-                    terminarCarga()
-                }
-            }
+            viewModelScope.launch { manejarAtendido() }
         }
     }
 
+    // Fix Bug 3: función extraída con job propio para evitar condiciones de carrera entre
+    // invocaciones concurrentes de actualizarPantalla
     private fun actualizarPantalla() {
         if (refAula == null || refPosicion == null) {
             estadoTurno = EstadoTurno.Error(
@@ -348,13 +337,22 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
             actualizarUI()
             return
         }
-        viewModelScope.launch {
+        pantallaJob?.cancel()
+        pantallaJob = viewModelScope.launch {
             try {
                 val posDoc = refPosicion!!.get(Source.SERVER).await()
+                if (!posDoc.exists()) {
+                    // Fix Bug 1: el documento fue eliminado (atendido), actualizar estado
+                    atendido = true
+                    manejarAtendido()
+                    return@launch
+                }
+                if (!isActive) return@launch
                 val ts = posDoc.data?.get("timestamp") ?: return@launch
                 val querySnapshot = refAula!!.collection("cola")
                     .whereLessThanOrEqualTo("timestamp", ts)
                     .get(Source.SERVER).await()
+                if (!isActive) return@launch
                 val posicion = querySnapshot.documents.size
                 Log.d(TAG, "Posición en la cola: $posicion")
                 when {
@@ -363,10 +361,34 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
                 }
                 terminarCarga()
                 actualizarUI()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error al actualizar pantalla: ${e.message}")
                 terminarCarga()
             }
+        }
+    }
+
+    private suspend fun manejarAtendido() {
+        Log.d(TAG, "La cola se ha vaciado tras ser atendido")
+        recuperarUltimaPeticion()
+        if (segundosEspera > 0 && tiempoEsperaRestante() > 0) {
+            estadoTurno = EstadoTurno.Esperando(tiempoEsperaRestante())
+            mostrarCronometro = true
+            mostrarBotonActualizar = false
+            mostrarError = false
+            iniciarCronometro()
+            actualizarUI()
+        } else {
+            Log.d(TAG, "Mostrando botón para volver a pedir turno")
+            reiniciarCronometro()
+            borrarUltimaPeticion()
+            estadoTurno = EstadoTurno.VolverAEmpezar
+            mostrarCronometro = false
+            mostrarBotonActualizar = true
+            mostrarError = false
+            terminarCarga()
         }
     }
 
@@ -459,6 +481,7 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
         listenerAula?.remove(); listenerAula = null
         listenerCola?.remove(); listenerCola = null
         listenerPosicion?.remove(); listenerPosicion = null
+        pantallaJob?.cancel(); pantallaJob = null
     }
 
     private fun desconectarListenerPosicion() {
@@ -570,6 +593,7 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
         super.onCleared()
         desconectarListeners()
         timerJob?.cancel()
+        pantallaJob?.cancel()
     }
 
     companion object {
