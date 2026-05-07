@@ -91,11 +91,9 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
             viewModelScope.launch(Dispatchers.Main) {
-                if (uid != null && errorRed) {
-                    errorRed = false
-                    desconectarListeners()
-                    conectarAula()
-                }
+                // Usar reintentar() en todos los casos: refresca el token antes de reconectar,
+                // independientemente de si uid es null o no.
+                if (errorRed) reintentar()
                 Log.d(TAG, "Red disponible")
             }
         }
@@ -200,10 +198,28 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                     crearAula()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error al recuperar la lista de aulas: ${e.message}")
-                terminarCarga()
-                errorRed = true
-                actualizarAulaUI(codigo = "?", enColaVal = 0)
+                Log.w(TAG, "Primer intento fallido al conectar al aula: ${e.message}. Reintentando en 2,5 s...")
+                try {
+                    delay(2_500)
+                    val querySnapshot = withTimeout(10_000) {
+                        refMisAulas!!.orderBy("timestamp").get(Source.SERVER).await()
+                    }
+                    val total = querySnapshot.documents.size
+                    numAulas = total
+                    if (posicion in 0 until total) {
+                        Log.d(TAG, "Conectado a aula existente (reintento automático)")
+                        refAula = querySnapshot.documents[posicion].reference
+                        conectarListener()
+                    } else {
+                        Log.d(TAG, "Creando nueva aula (reintento automático)...")
+                        crearAula()
+                    }
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Error al recuperar la lista de aulas: ${e2.message}")
+                    terminarCarga()
+                    errorRed = true
+                    actualizarAulaUI(codigo = "?", enColaVal = 0)
+                }
             }
         }
     }
@@ -521,10 +537,39 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                     desconectarAula()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error al recuperar datos: ${e.message}")
-                terminarCarga()
-                errorRed = true
-                actualizarAulaUI(codigo = "?", enColaVal = 0)
+                Log.w(TAG, "Primer intento fallido al buscar aula: ${e.message}. Reintentando en 2,5 s...")
+                try {
+                    delay(2_500)
+                    val querySnapshot = withTimeout(10_000) {
+                        db.collectionGroup("aulas")
+                            .whereEqualTo("codigo", codigo.uppercase())
+                            .whereEqualTo("pin", pin)
+                            .get(Source.SERVER).await()
+                    }
+                    if (querySnapshot.documents.isNotEmpty()) {
+                        Log.d(TAG, "Aula encontrada: $codigo (reintento automático)")
+                        prefs.edit().apply {
+                            putString("codigoAulaConectada", codigo)
+                            putString("pinConectada", pin)
+                        }.apply()
+                        desconectarListeners()
+                        invitado = true
+                        refAula = querySnapshot.documents.first().reference
+                        conectarListener()
+                    } else {
+                        Log.e(TAG, "Aula no encontrada (reintento automático)")
+                        terminarCarga()
+                        if (prefs.getString("codigoAulaConectada", null) == null) {
+                            mostrarAlertaErrorConexion = true
+                        }
+                        desconectarAula()
+                    }
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Error al recuperar datos: ${e2.message}")
+                    terminarCarga()
+                    errorRed = true
+                    actualizarAulaUI(codigo = "?", enColaVal = 0)
+                }
             }
         }
     }
@@ -545,13 +590,18 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
         desconectarListeners()
         iniciarCarga()
 
+        // Si ya tenemos uid, refrescamos el token de forma preventiva antes de reconectar.
+        // El token puede estar caducado tras días de inactividad aunque uid no sea null.
         if (uid != null) {
-            val codigoAulaConectada = prefs.getString("codigoAulaConectada", "") ?: ""
-            val pinConectada = prefs.getString("pinConectada", "") ?: ""
-            if (codigoAulaConectada.isNotEmpty() && pinConectada.isNotEmpty()) {
-                buscarAula(codigo = codigoAulaConectada, pin = pinConectada)
-            } else {
-                conectarAula(posicion = aulaActual)
+            viewModelScope.launch(Dispatchers.Main) {
+                runCatching { mAuth.currentUser?.getIdToken(false)?.await() }
+                val codigoAulaConectada = prefs.getString("codigoAulaConectada", "") ?: ""
+                val pinConectada = prefs.getString("pinConectada", "") ?: ""
+                if (codigoAulaConectada.isNotEmpty() && pinConectada.isNotEmpty()) {
+                    buscarAula(codigo = codigoAulaConectada, pin = pinConectada)
+                } else {
+                    conectarAula(posicion = aulaActual)
+                }
             }
             return
         }
