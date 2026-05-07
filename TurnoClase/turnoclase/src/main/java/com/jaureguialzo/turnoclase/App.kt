@@ -22,6 +22,12 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class App : MultiDexApplication() {
 
@@ -39,6 +45,18 @@ class App : MultiDexApplication() {
             firebaseAppCheck.installAppCheckProviderFactory(
                 DebugAppCheckProviderFactory.getInstance()
             )
+        }
+
+        // Pre-calentar tokens de App Check y Auth en segundo plano al arrancar la app.
+        // Así el refresco está listo cuando el usuario pulse "conectar", evitando que
+        // la renovación de tokens agote el timeout de la primera conexión.
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            runCatching {
+                firebaseAppCheck.getToken(false).await()
+            }
+            runCatching {
+                FirebaseAuth.getInstance().currentUser?.getIdToken(false)?.await()
+            }
         }
     }
 }

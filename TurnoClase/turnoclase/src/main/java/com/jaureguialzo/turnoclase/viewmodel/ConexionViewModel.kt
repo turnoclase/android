@@ -137,7 +137,9 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
 
         viewModelScope.launch {
             try {
-                val result = withTimeout(10_000) {
+                // Timeout más holgado en arranque en frío: App Check + Auth pueden necesitar
+                // renovar tokens de red simultáneamente tras días de inactividad.
+                val result = withTimeout(20_000) {
                     mAuth.signInAnonymously().await()
                 }
                 uid = result.user?.uid
@@ -195,12 +197,37 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
                     actualizarUI()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error al recuperar datos: ${e.message}")
-                errorRed = true
-                estadoTurno = EstadoTurno.Error(
-                    getApplication<Application>().getString(R.string.MENSAJE_ERROR_RED)
-                )
-                actualizarUI()
+                Log.w(TAG, "Primer intento fallido al conectar al aula: ${e.message}. Reintentando en 2,5 s...")
+                // Reintento automático silencioso: el SDK puede necesitar unos segundos para
+                // completar el refresco de tokens de App Check / Auth en arranque en frío.
+                try {
+                    delay(2_500)
+                    val querySnapshot = withTimeout(10_000) {
+                        db.collectionGroup("aulas")
+                            .whereEqualTo("codigo", codigo)
+                            .limit(1)
+                            .get(Source.SERVER).await()
+                    }
+                    if (querySnapshot.documents.isNotEmpty()) {
+                        Log.d(TAG, "Conectado a aula existente (reintento automático)")
+                        errorRed = false
+                        conectarListenerAula(querySnapshot.documents[0])
+                    } else {
+                        Log.e(TAG, "Aula no encontrada (reintento automático)")
+                        errorRed = false
+                        estadoTurno = EstadoTurno.Error(
+                            getApplication<Application>().getString(R.string.MENSAJE_ERROR)
+                        )
+                        actualizarUI()
+                    }
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Error al recuperar datos: ${e2.message}")
+                    errorRed = true
+                    estadoTurno = EstadoTurno.Error(
+                        getApplication<Application>().getString(R.string.MENSAJE_ERROR_RED)
+                    )
+                    actualizarUI()
+                }
             }
         }
     }
@@ -427,14 +454,14 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
         val codigo = codigoAulaActual
         val nombre = nombreEfectivo
 
-        if (uid != null) {
-            encolarAlumno(codigo)
-            return
-        }
-
+        // Siempre pasa por signInAnonymously para garantizar que el ID token está fresco,
+        // independientemente de si uid ya existía. Devuelve el usuario cacheado si ya hay
+        // sesión anónima abierta, pero refresca el token si está caducado.
         viewModelScope.launch {
             try {
-                val result = mAuth.signInAnonymously().await()
+                val result = withTimeout(20_000) {
+                    mAuth.signInAnonymously().await()
+                }
                 uid = result.user?.uid
                 actualizarAlumno(nombre)
                 encolarAlumno(codigo)
