@@ -17,7 +17,7 @@
     <string name="dialogo_error_mensaje">No se ha podido acceder al aula con los datos proporcionados.</string>
     <string name="dialogo_ok">Ok</string>
     <string name="dialogo_conexion_titulo">Conectar a otra aula</string>
-    <string name="menu_establecer_espera">Tiempo de espera</string>
+    <string name="menu_establecer_espera">Establecer tiempo de espera</string>
     <string name="dialogo_establecer_espera_titulo">Tiempo de espera (minutos)</string>
     <string name="dialogo_guardar">Guardar</string>
     <string name="menu_accion_borrar_aula">Borrar aula</string>
@@ -38,6 +38,6 @@
     <string name="cola_vacia">La cola está vacía</string>
     <string name="cola_vaciar_boton">Vaciar cola</string>
     <string name="cola_vaciar_dialogo_titulo">Vaciar cola</string>
-    <string name="cola_vaciar_dialogo_mensaje">Esta acción eliminará todos los alumnos de la cola de espera.</string>
+    <string name="cola_vaciar_dialogo_mensaje">Esta acción eliminará a todos los alumnos de la cola de espera.</string>
     <string name="cola_vaciar_confirmar">Vaciar</string>
 </resources>
