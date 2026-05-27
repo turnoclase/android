@@ -472,7 +472,6 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                         refAulaLocal.collection("espera").document(alumnoId)
                             .set(mapOf("timestamp" to FieldValue.serverTimestamp())).await()
                         refPosicion.delete().await()
-                        avanzandoCola = false
                         // Mostrar el siguiente
                         if (docs.size > 1) {
                             val siguienteId = docs[1].data?.get("alumno") as? String
@@ -488,6 +487,7 @@ class AulaViewModel(application: Application) : AndroidViewModel(application) {
                         } else {
                             nombreAlumno = ""
                         }
+                        avanzandoCola = false
                     } else {
                         nombreAlumno = alumnoDoc.data?.get("nombre") as? String ?: "?"
                     }

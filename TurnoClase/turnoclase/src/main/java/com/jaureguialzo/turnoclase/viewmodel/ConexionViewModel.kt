@@ -349,7 +349,7 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
 
         } else {
             Log.d(TAG, "La cola se ha vaciado tras ser atendido")
-            viewModelScope.launch { manejarAtendido() }
+            if (!encolando) viewModelScope.launch { manejarAtendido() }
         }
     }
 
