@@ -161,15 +161,13 @@ class ConexionViewModel(application: Application) : AndroidViewModel(application
 
     // MARK: - Registrar alumno en Firestore
 
-    private fun actualizarAlumno(nombre: String) {
-        viewModelScope.launch {
-            try {
-                db.collection("alumnos").document(uid!!)
-                    .set(mapOf("nombre" to nombre), SetOptions.merge()).await()
-                Log.d(TAG, "Alumno actualizado")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error al actualizar el alumno: ${e.message}")
-            }
+    private suspend fun actualizarAlumno(nombre: String) {
+        try {
+            db.collection("alumnos").document(uid!!)
+                .set(mapOf("nombre" to nombre), SetOptions.merge()).await()
+            Log.d(TAG, "Alumno actualizado")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al actualizar el alumno: ${e.message}")
         }
     }
 
